@@ -1,12 +1,14 @@
 import streamlit as st
 #from utils.config import *
-from utils.extractor import extractor
+from utils.extractor import extractor, replace_disallowed_words, extract_trademark_details
 import requests
 import json
 from io import BytesIO
 import logging
 import fitz
 import uuid
+import asyncio
+import json
 
 # Connect to Azure Redis
 # redis_client = redis.StrictRedis(
@@ -58,6 +60,13 @@ if uploaded_files:
         pdf_bytes = new_file.read()
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
         # st.write("hi2")
+        extracted_pages = []
+        for page_num, page in enumerate(doc, start=1):
+            # Extract text with optional clipping
+            text = page.get_text()
+            text = replace_disallowed_words(text)
+            extracted_pages.append(text)
+        
         Index, document = extractor(doc)
         if Index.startswith("```json"):
             Index = Index[7:]  # Remove the "```json" part
@@ -67,9 +76,46 @@ if uploaded_files:
         # Convert the remaining text to a Python object
         Index = json.loads(Index)
         #st.write(Index)
-        for entry in Index:
-            st.write(entry)
+        # for entry in Index:
+        #     st.write(entry)
+        async def parallel_extraction():
+            tasks = []
+            for i in range(len(Index)):
+                start_page = int(Index[i]["page-start"]) - 1
+                if i == len(Index) - 1:
+                    end_page = start_page + 4
+                else:
+                    end_page = int(Index[i + 1]["page-start"]) - 1
+    
+                document_chunk = "\n".join(extracted_pages[start_page:end_page])
+                tasks.append(
+                    extract_trademark_details(document_chunk, Index[i]["name"])
+                )
+    
+            return await asyncio.gather(*tasks)
 
+        async def process_trademarks():
+            extracted_details = await parallel_extraction()
+
+            # proposed_name = "NOTES"
+            # proposed_class = "3,5,35"
+            # proposed_goods_services = "DEODORANTS, ANTIPERSPIRANTS"
+
+            for details in extracted_details:
+                st.write(details)
+                # if not details or "error" in details:
+                #     continue
+
+                # comparision_result = compare_trademarks(
+                #     details, proposed_name, proposed_class, proposed_goods_services
+                # )
+
+                # conflict_grade = comparision_result.get("conflict_grade")
+                # comparison_results[conflict_grade].append(comparision_result)
+
+            # Create Word document
+
+        asyncio.run(process_trademarks())
         # # Create the document in memory
         # doc = Document()
         # for conflict_grade, results in comparison_results.items():
