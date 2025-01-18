@@ -153,7 +153,8 @@ def extractor(doc):
     )
 
     # Extract the response content
-    response = llm_response.response.choices[0].message.content.strip().lower()
+    response_content = llm_response.json()  # Parse the JSON response
+    response = response_content["choices"][0]["message"]["content"].strip().lower()
 
     # record = response
     # st_response = str(response)[7:-3]
