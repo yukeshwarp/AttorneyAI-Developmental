@@ -59,7 +59,9 @@ if uploaded_files:
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
         # st.write("hi2")
         Index, document = extractor(doc)
-        st.write(Index)
+        #st.write(Index)
+        for entry in Index:
+            st.write(entry)
 
         # # Create the document in memory
         # doc = Document()
