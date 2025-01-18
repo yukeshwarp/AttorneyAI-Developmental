@@ -1,5 +1,7 @@
 import os
+from dotenv import load_dotenv
 
+load_dotenv()  # Load environment variables from the .env file
 
 llm_api_key = os.getenv("AZURE_API_KEY")
 azure_llm_endpoint = os.getenv("AZURE_ENDPOINT")
