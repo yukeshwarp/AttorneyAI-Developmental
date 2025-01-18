@@ -287,12 +287,13 @@ async def extract_trademark_details(document_chunk: str, tm_name: str):
             )
             
             # Extract the structured response
-            function_response = response["choices"][0]["message"]["function_call"]["arguments"]
-            structured_data = json.loads(function_response)  # Convert JSON string to Python dict
+            function_response = response.choices[0].message.content
+            return function_response
+            # structured_data = json.loads(function_response)  # Convert JSON string to Python dict
             
-            # Validate the response using Pydantic
-            validated_data = TrademarkDetails(**structured_data)
-            return validated_data.dict()  # Return validated data as a dictionary
+            # # Validate the response using Pydantic
+            # validated_data = TrademarkDetails(**structured_data)
+            # return validated_data.dict()  # Return validated data as a dictionary
 
         except ValidationError as ve:
             print(f"Validation Error: {ve.json()}")  # Log detailed validation errors
