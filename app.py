@@ -61,7 +61,7 @@ if uploaded_files:
         Index, document = extractor(doc)
         
         #st.write(Index)
-        for entry in record:
+        for entry in Index:
             st.write(entry)
 
         # # Create the document in memory
