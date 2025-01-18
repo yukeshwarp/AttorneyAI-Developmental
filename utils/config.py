@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from openai import AzureOpenAI
 
 load_dotenv()  # Load environment variables from the .env file
 
@@ -11,3 +12,9 @@ llm_api_version = "2024-10-01-preview"
 redis_host = os.getenv("REDIS_HOST")
 redis_port = 6379
 redis_password = os.getenv("REDIS_KEY")
+
+client = AzureOpenAI(
+                azure_endpoint=azure_llm_endpoint,
+                api_key=llm_api_key,
+                api_version="2024-10-01-preview",
+            )
