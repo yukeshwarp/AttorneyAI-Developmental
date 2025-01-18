@@ -31,7 +31,7 @@ def extractor(doc):
     index = ""
     for page_num, page in enumerate(doc, start=1):
         # Extract text with optional clipping
-        text = page.get_text(clip=clip)
+        text = page.get_text()
         text = replace_disallowed_words(text)
         extracted_pages2.append(text)
 
