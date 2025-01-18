@@ -50,6 +50,8 @@ def extractor(doc):
 
         # Store relevant text and page numbers for both intervals
         if flag_uspto or flag_state:
+            st.write(text)
+            st.write("---")
             index = f"""{index} \n  {text}"""
             page_numbers.append(page_num)
 
@@ -120,6 +122,8 @@ def extractor(doc):
     The input text will follow a similar structure to the example provided, so adapt the extraction logic accordingly.
     Extracted text from index:
     {index}
+    ---
+    Return only the structured output with no additional text.
     """
 
 
