@@ -14,4 +14,3 @@ phonetics
 Metaphone
 nltk
 python-dotenv
-openai_function_call
