@@ -211,7 +211,7 @@ async def extract_trademark_details(document_chunk: str, tm_name: str):
     max_retries = 5  # Maximum number of retries
     base_delay = 1  # Base delay in seconds
     jitter = 0.5  # Maximum jitter to add to the delay
-    
+
     # Define the schema for function calling
     function_schema = {
         "name": "extract_trademark_details",
@@ -219,42 +219,42 @@ async def extract_trademark_details(document_chunk: str, tm_name: str):
         "parameters": {
             "type": "object",
             "properties": {
-                "trademark_name": {"type": "string", "description": "The name of the trademark."},
-                "status": {"type": "string", "description": "The status of the trademark (e.g., Registered, Cancelled)."},
-                "serial_number": {"type": "string", "description": "The serial number of the trademark."},
+                "trademark_name": {"type": "string"},
+                "status": {"type": "string"},
+                "serial_number": {"type": "string"},
                 "international_class_number": {
                     "type": "array",
                     "items": {"type": "integer"},
-                    "description": "A list of international class numbers associated with the trademark.",
                 },
-                "goods_services": {"type": "string", "description": "The goods and services associated with the trademark."},
-                "owner": {"type": "string", "description": "The owner of the trademark."},
-                "filed_date": {"type": "string", "description": "The filed date of the trademark in MMM DD, YYYY format."},
-                "registration_number": {"type": "string", "description": "The registration number of the trademark."},
-                "design_phrase": {"type": "string", "description": "The design phrase of the trademark."},
+                "goods_services": {"type": "string"},
+                "owner": {"type": "string"},
+                "filed_date": {"type": "string"},
+                "registration_number": {"type": "string"},
+                "design_phrase": {"type": "string"},
             },
             "required": [
-                "trademark_name", 
-                "status", 
-                "serial_number", 
-                "international_class_number", 
-                "goods_services", 
-                "owner", 
-                "filed_date", 
-                "registration_number", 
+                "trademark_name",
+                "status",
+                "serial_number",
+                "international_class_number",
+                "goods_services",
+                "owner",
+                "filed_date",
+                "registration_number",
                 "design_phrase",
             ],
         },
     }
-    
+
     for attempt in range(1, max_retries + 1):
         try:
+            # Initialize the Azure OpenAI client
             client = AzureOpenAI(
-                            azure_endpoint=azure_llm_endpoint,
-                            api_key=llm_api_key,
-                            api_version="2024-10-01-preview",
-                        )
-            
+                azure_endpoint=azure_llm_endpoint,
+                api_key=llm_api_key,
+                api_version="2024-10-01-preview",
+            )
+
             messages = [
                 {
                     "role": "system",
@@ -263,18 +263,18 @@ async def extract_trademark_details(document_chunk: str, tm_name: str):
                 {
                     "role": "user",
                     "content": f"""
-                    Extract the following details from the provided trademark document chunk:
-    
-                    Document chunk: 
+                    Extract details from the provided trademark document chunk:
+
+                    Document chunk:
                     {document_chunk}
                     Trademark name: {tm_name}
-    
-                    Ensure the response adheres to the pre-defined schema strictly.
+
+                    Ensure the response adheres to the schema.
                 """,
                 },
             ]
-            
-            # Make the OpenAI API call with function calling
+
+            # Make the OpenAI API call
             loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(
                 None,
@@ -282,15 +282,24 @@ async def extract_trademark_details(document_chunk: str, tm_name: str):
                     model="gpt-4o",
                     messages=messages,
                     functions=[function_schema],
+                    function_call={"name": "extract_trademark_details"},
                     temperature=0,
                 ),
             )
-            
-            # Extract the structured response
+
+            # Validate response structure
+            if not response.choices or not response.choices[0].message:
+                print(f"Full Response: {response}")
+                raise ValueError("Unexpected API response format.")
+
             function_response = response.choices[0].message.content
-            #return function_response
-            structured_data = json.loads(function_response)  # Convert JSON string to Python dict
-            
+            if not function_response:
+                print(f"Empty Function Response: {response}")
+                raise ValueError("No content in function response.")
+
+            # Convert JSON string to Python dict
+            structured_data = json.loads(function_response)
+
             # Validate the response using Pydantic
             validated_data = TrademarkDetails(**structured_data)
             return validated_data.dict()  # Return validated data as a dictionary
@@ -300,9 +309,9 @@ async def extract_trademark_details(document_chunk: str, tm_name: str):
             raise ve  # Re-raise the validation error
         except Exception as e:
             if attempt == max_retries:
+                print(f"Final attempt failed: {str(e)}")
                 raise  # Raise the exception if we've reached the maximum retries
-            else:
-                delay = base_delay * (2 ** (attempt - 1))  # Exponential backoff
-                delay_with_jitter = delay + random.uniform(0, jitter)
-                print(f"Attempt {attempt} failed. Retrying in {delay_with_jitter:.2f} seconds...")
-                await asyncio.sleep(delay_with_jitter)
+            delay = base_delay * (2 ** (attempt - 1))  # Exponential backoff
+            delay_with_jitter = delay + random.uniform(0, jitter)
+            print(f"Attempt {attempt} failed. Retrying in {delay_with_jitter:.2f} seconds...")
+            await asyncio.sleep(delay_with_jitter)
