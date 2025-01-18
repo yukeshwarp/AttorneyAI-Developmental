@@ -38,7 +38,7 @@ def extractor(doc):
 
         # Check for interval boundaries
     for page_num, page in enumerate(doc, start=1):
-        text = page.get_text()
+        text = page.get_text(clip = clip)
         if "USPTO Summary Page" in text:
             flag_uspto = True
         elif "ANALYST REVIEW −USPTO REPORT" in text:
