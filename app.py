@@ -1,6 +1,6 @@
 import streamlit as st
-from Utils.config import *
-from Utils.extractor import extractor
+from utils.config import *
+from utils.extractor import extractor
 import requests
 import json
 from io import BytesIO
