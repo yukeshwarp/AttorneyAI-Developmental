@@ -281,7 +281,7 @@ async def extract_trademark_details(document_chunk: str, tm_name: str):
                 lambda: client.chat.completions.create(
                     model="gpt-4o",
                     messages=messages,
-                    functiofunctions=[function_schema],
+                    functions=[function_schema],
                     temperature=0,
                 ),
             )
