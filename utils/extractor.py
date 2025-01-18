@@ -308,7 +308,7 @@ async def extract_trademark_details(document_chunk: str, tm_name):
             response = await loop.run_in_executor(
                 None,
                 lambda: client.chat.completions.create(
-                    model="gpt-4o", messages=messages,tools=tools, temperature=0
+                    model="gpt-4o", messages=messages, temperature=0
                 ),
             )
     
