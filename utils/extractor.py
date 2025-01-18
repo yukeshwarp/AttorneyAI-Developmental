@@ -2,6 +2,7 @@ import requests
 import json
 import fitz
 from utils.config import *
+import logging as log
 
 llm_headers = {"Content-Type": "application/json", "api-key": llm_api_key}
 
@@ -50,8 +51,7 @@ def extractor(doc):
 
         # Store relevant text and page numbers for both intervals
         if flag_uspto or flag_state:
-            print(text)
-            print("\n")
+            log.error(text)
             index = f"""{index} \n  {text}"""
             page_numbers.append(page_num)
 
