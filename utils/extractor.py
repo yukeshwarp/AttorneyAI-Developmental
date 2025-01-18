@@ -1,7 +1,7 @@
 import requests
 import json
 import fitz
-from config import *
+from utils.config import *
 
 llm_headers = {"Content-Type": "application/json", "api-key": llm_api_key}
 
