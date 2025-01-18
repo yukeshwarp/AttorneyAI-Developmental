@@ -297,7 +297,7 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                             "registration_number": {"type": "string"},
                             "design_phrase": {"type": "string"},
                         },
-                        "required": "required": [],
+                        "required": "required": ["trademark_name"],
                         "additionalProperties": False
                     },
                     "strict": True
