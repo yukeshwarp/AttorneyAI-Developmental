@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, ValidationError, validator
 from typing import List, Dict, Union, Optional
 from typing import List, Dict, Union
 import random
+from openai import AzureOpenAI
 
 llm_headers = {"Content-Type": "application/json", "api-key": llm_api_key}
 
