@@ -51,6 +51,7 @@ def extractor(doc):
 
         # Store relevant text and page numbers for both intervals
         if flag_uspto or flag_state:
+            log.info(text)
             index = f"""{index} \n  {text}"""
             page_numbers.append(page_num)
 
