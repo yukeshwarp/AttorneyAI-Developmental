@@ -22,13 +22,13 @@ class TrademarkDetails(BaseModel):
     goods_services: str = Field(..., description="The goods and services associated with the trademark.")
     owner: str = Field(..., description="The owner of the trademark.")
     filed_date: str = Field(
-        ..., 
+        ...,
         description="The filed date of the trademark in MMM DD, YYYY format.",
-        regex=r"^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{2}, \d{4}$",
+        pattern=r"^[A-Z][a-z]{2} \d{2}, \d{4}$",  # Updated to use `pattern`
     )
     registration_number: str = Field(..., description="The registration number of the trademark.")
     design_phrase: str = Field(..., description="The design phrase of the trademark.")
-
+    
 @validator("filed_date")
 def validate_filed_date(cls, value):
     # Validate date format
