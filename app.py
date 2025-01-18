@@ -1,6 +1,7 @@
 import streamlit as st
 #from utils.config import *
-from utils.extractor import extractor, replace_disallowed_words, extract_trademark_details
+from parser import extractor, extract_trademark_details
+from models import replace_disallowed_words
 import requests
 import json
 from io import BytesIO
