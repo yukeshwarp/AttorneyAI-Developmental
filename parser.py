@@ -191,33 +191,45 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                 """,
                 },
             ]
-            tools = [{
-                "type": "function",
-                "function": {
-                    "name": "extract_trademark_details",
-                    "description": "Extracts trademark details from a provided document chunk.",
-                    "parameters": {
+            tools = [
+                        {
+                            "type": "function",
+                            "function": {
+                                "name": "extract_trademark_details",
+                                "description": "Extracts trademark details from a provided document chunk.",
+                                "parameters": {
                                     "type": "object",
                                     "properties": {
-                            "trademark_name": {"type": "string"},
-                            "status": {"type": "string"},
-                            "serial_number": {"type": "string"},
-                            "international_class_number": {
-                                "type": "array",
-                                "items": {"type": "integer"},
+                                        "trademark_name": {"type": "string"},
+                                        "status": {"type": "string"},
+                                        "serial_number": {"type": "string"},
+                                        "international_class_number": {
+                                            "type": "array",
+                                            "items": {"type": "integer"},
+                                        },
+                                        "goods_services": {"type": "string"},
+                                        "owner": {"type": "string"},
+                                        "filed_date": {"type": "string"},
+                                        "registration_number": {"type": "string"},
+                                        "design_phrase": {"type": "string"},
+                                    },
+                                    "required": [
+                                        "trademark_name",
+                                        "status",
+                                        "serial_number",
+                                        "international_class_number",
+                                        "goods_services",
+                                        "owner",
+                                        "filed_date",
+                                        "registration_number",
+                                        "design_phrase",
+                                    ],
+                                    "additionalProperties": False,
+                                },
                             },
-                            "goods_services": {"type": "string"},
-                            "owner": {"type": "string"},
-                            "filed_date": {"type": "string"},
-                            "registration_number": {"type": "string"},
-                            "design_phrase": {"type": "string"},
-                        },
-                        "required": ["trademark_name"],
-                        "additionalProperties": False
-                    },
-                    "strict": True
-                }
-            }]
+                        }
+                    ]
+
                 
             loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(
