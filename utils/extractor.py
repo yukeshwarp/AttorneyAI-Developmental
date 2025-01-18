@@ -275,12 +275,15 @@ async def extract_trademark_details(document_chunk: str, tm_name: str):
             ]
             
             # Make the OpenAI API call with function calling
-            response = await client.chat_complete(
-                model="gpt-4o",
-                messages=messages,
-                functions=[function_schema],  # Pass the schema
-                function_call={"name": "extract_trademark_details"},  # Explicitly call the function
-                temperature=0,
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=messages,
+                    functiofunctions=[function_schema],
+                    temperature=0,
+                ),
             )
             
             # Extract the structured response
