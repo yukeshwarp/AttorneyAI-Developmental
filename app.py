@@ -59,7 +59,13 @@ if uploaded_files:
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
         # st.write("hi2")
         Index, document = extractor(doc)
+        if Index.startswith("```json"):
+            Index = Index[7:]  # Remove the "```json" part
+        if Index.endswith("```"):
+            Index = Index[:-3]  # Remove the trailing "```"
         
+        # Convert the remaining text to a Python object
+        Index = json.loads(Index)
         #st.write(Index)
         for entry in Index:
             st.write(entry)
