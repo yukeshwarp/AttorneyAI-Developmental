@@ -60,9 +60,9 @@ if uploaded_files:
         # st.write("hi2")
         Index, document = extractor(doc)
         
-        st.write(Index)
-        # for entry in record:
-        #     st.write(entry)
+        #st.write(Index)
+        for entry in record:
+            st.write(entry)
 
         # # Create the document in memory
         # doc = Document()
