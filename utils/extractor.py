@@ -293,29 +293,29 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                     details[key.strip().lower().replace(" ", "_")] = (
                         value.strip()
                     )
-            if details:
-                # Attempt to create a TrademarkDetails instance
-                try:
-                    details = TrademarkDetails(
-                        trademark_name=details.get("-_trademark_name"),
-                        status=details.get("-_status"),
-                        serial_number=details.get("serial_number"),
-                        international_class_number=details.get(
-                            "international_class_number"
-                        ),
-                        owner=details.get("owner"),
-                        goods_services=details.get("goods_services"),
-                        page_number=details.get(
-                            "page_number", -1
-                        ),
-                        registration_number=details.get(
-                            "registration_number"
-                        ),
-                        design_phrase=details.get("design_phrase", ""),
-                    )
-                except ValidationError as e:
-                    log.error(f"Validation error {e}")
-            details["-_trademark_name"] = tm_name
+            # if details:
+            #     # Attempt to create a TrademarkDetails instance
+            #     try:
+            #         details = TrademarkDetails(
+            #             trademark_name=details.get("-_trademark_name"),
+            #             status=details.get("-_status"),
+            #             serial_number=details.get("serial_number"),
+            #             international_class_number=details.get(
+            #                 "international_class_number"
+            #             ),
+            #             owner=details.get("owner"),
+            #             goods_services=details.get("goods_services"),
+            #             page_number=details.get(
+            #                 "page_number", -1
+            #             ),
+            #             registration_number=details.get(
+            #                 "registration_number"
+            #             ),
+            #             design_phrase=details.get("design_phrase", ""),
+            #         )
+            #     except ValidationError as e:
+            #         log.error(f"Validation error {e}")
+            # details["-_trademark_name"] = tm_name
     
             return details  # Successfully completed, return the result
 
