@@ -21,7 +21,7 @@ def extractor(doc):
     
     page = doc[0]
     rect = page.rect
-    height = 50
+    height = 55
     clip = fitz.Rect(0, height, rect.width, rect.height - height)
     extracted_pages = []  # Array to store extracted text from each relevant page
     page_numbers = []  # Array to store corresponding page numbers
