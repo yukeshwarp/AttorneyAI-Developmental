@@ -249,11 +249,11 @@ async def extract_trademark_details(document_chunk: str, tm_name: str):
     
     for attempt in range(1, max_retries + 1):
         try:
-            client = OpenAIClient(
-                api_key=llm_api_key,
-                base_url=azure_llm_endpoint,
-                api_version="2024-10-01-preview",
-            )
+            client = AzureOpenAI(
+                            azure_endpoint=azure_llm_endpoint,
+                            api_key=llm_api_key,
+                            api_version="2024-10-01-preview",
+                        )
             
             messages = [
                 {
