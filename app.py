@@ -1,5 +1,5 @@
 import streamlit as st
-#from utils.config import *
+from utils.config import *
 from parser import extractor, extract_trademark_details
 from models import replace_disallowed_words
 import requests
@@ -10,11 +10,6 @@ import fitz
 import uuid
 import asyncio
 import json
-
-# Connect to Azure Redis
-# redis_client = redis.StrictRedis(
-#     host=redis_host, port=redis_port, password=redis_password, decode_responses=True
-# )
 
 
 if "documents" not in st.session_state:
