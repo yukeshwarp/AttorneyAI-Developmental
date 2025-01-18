@@ -13,46 +13,21 @@ from openai import AzureOpenAI
 llm_headers = {"Content-Type": "application/json", "api-key": llm_api_key}
 
 class TrademarkDetails(BaseModel):
-    trademark_name: str = Field(
-        ..., description="The name of the Trademark", example="DISCOVER"
-    )
-    status: str = Field(
-        ..., description="The Status of the Trademark", example="Registered"
-    )
-    serial_number: str = Field(
-        ...,
-        description="The Serial Number of the trademark from Chronology section",
-        example="87−693,628",
-    )
+    trademark_name: str = Field(..., description="The name of the trademark.")
+    status: str = Field(..., description="The status of the trademark (e.g., Registered, Cancelled).")
+    serial_number: str = Field(..., description="The serial number of the trademark.")
     international_class_number: List[int] = Field(
-        ...,
-        description="The International class number or Nice Classes number of the trademark from Goods/Services section or Nice Classes section",
-        example=[18],
+        ..., description="A list of international class numbers associated with the trademark."
     )
-    owner: str = Field(
-        ..., description="The owner of the trademark", example="WALMART STORES INC"
+    goods_services: str = Field(..., description="The goods and services associated with the trademark.")
+    owner: str = Field(..., description="The owner of the trademark.")
+    filed_date: str = Field(
+        ..., 
+        description="The filed date of the trademark in MMM DD, YYYY format.",
+        regex=r"^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{2}, \d{4}$",
     )
-    goods_services: str = Field(
-        ...,
-        description="The goods/services from the document",
-        example="LUGGAGE AND CARRYING BAGS; SUITCASES, TRUNKS, TRAVELLING BAGS, SLING BAGS FOR CARRYING INFANTS, SCHOOL BAGS; PURSES; WALLETS; RETAIL AND ONLINE RETAIL SERVICES",
-    )
-    page_number: int = Field(
-        ...,
-        description="The page number where the trademark details are found in the document",
-        example=3,
-    )
-    registration_number: Union[str, None] = Field(
-        None,
-        description="The Registration number of the trademark from Chronology section",
-        example="5,809,957",
-    )
-    design_phrase: str = Field(
-        "",
-        description="The design phrase of the trademark",
-        example="THE MARK CONSISTS OF THE STYLIZED WORD 'MINI' FOLLOWED BY 'BY MOTHERHOOD.'",
-    )
-
+    registration_number: str = Field(..., description="The registration number of the trademark.")
+    design_phrase: str = Field(..., description="The design phrase of the trademark.")
 
 @validator("filed_date")
 def validate_filed_date(cls, value):
@@ -232,19 +207,54 @@ def extractor(doc):
     return response, ""
 
 
-async def extract_trademark_details(document_chunk: str, tm_name):
+async def extract_trademark_details(document_chunk: str, tm_name: str):
     max_retries = 5  # Maximum number of retries
     base_delay = 1  # Base delay in seconds
     jitter = 0.5  # Maximum jitter to add to the delay
     
+    # Define the schema for function calling
+    function_schema = {
+        "name": "extract_trademark_details",
+        "description": "Extracts trademark details from a provided document chunk.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "trademark_name": {"type": "string", "description": "The name of the trademark."},
+                "status": {"type": "string", "description": "The status of the trademark (e.g., Registered, Cancelled)."},
+                "serial_number": {"type": "string", "description": "The serial number of the trademark."},
+                "international_class_number": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "A list of international class numbers associated with the trademark.",
+                },
+                "goods_services": {"type": "string", "description": "The goods and services associated with the trademark."},
+                "owner": {"type": "string", "description": "The owner of the trademark."},
+                "filed_date": {"type": "string", "description": "The filed date of the trademark in MMM DD, YYYY format."},
+                "registration_number": {"type": "string", "description": "The registration number of the trademark."},
+                "design_phrase": {"type": "string", "description": "The design phrase of the trademark."},
+            },
+            "required": [
+                "trademark_name", 
+                "status", 
+                "serial_number", 
+                "international_class_number", 
+                "goods_services", 
+                "owner", 
+                "filed_date", 
+                "registration_number", 
+                "design_phrase",
+            ],
+        },
+    }
+    
     for attempt in range(1, max_retries + 1):
         try:
-            client = AzureOpenAI(
-                azure_endpoint=azure_llm_endpoint,
+            client = OpenAIClient(
                 api_key=llm_api_key,
+                base_url=azure_llm_endpoint,
                 api_version="2024-10-01-preview",
             )
-    
+            
             messages = [
                 {
                     "role": "system",
@@ -253,83 +263,42 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                 {
                     "role": "user",
                     "content": f"""
-                    Extract the following details from the provided trademark document and present them in the exact format specified:  
+                    Extract the following details from the provided trademark document chunk:
     
-                    - Trademark Name  
-                    - Status  
-                    - Serial Number  
-                    - International Class Number (as a list of integers)
-                    - Goods & Services (Goods and services are given after every international class, extract them intelligently as they may span over more than one page.)
-                    - Owner  
-                    - Filed Date (format: MMM DD, YYYY, e.g., Jun 14, 2024)  
-                    - Registration Number  
-                    - Design phrase
+                    Document chunk: 
+                    {document_chunk}
+                    Trademark name: {tm_name}
     
-                    Instructions:  
-                    - Return the results in the following format, replacing the example data with the extracted information:
-                    - Ensure the output matches this format precisely.  
-                    - Do not include any additional text or explanations.  
-    
-                    Document chunk of to extract from: 
-                    Trademark name: {tm_name} 
-                    {document_chunk}  
+                    Ensure the response adheres to the pre-defined schema strictly.
                 """,
                 },
             ]
-    
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None,
-                lambda: client.chat.completions.create(
-                    model="gpt-4o", messages=messages, temperature=0
-                ),
+            
+            # Make the OpenAI API call with function calling
+            response = await client.chat_complete(
+                model="gpt-4o",
+                messages=messages,
+                functions=[function_schema],  # Pass the schema
+                function_call={"name": "extract_trademark_details"},  # Explicitly call the function
+                temperature=0,
             )
-    
-            extracted_text = response.choices[0].message.content
-            details = {}
-            for line in extracted_text.split("\n"):
-                if ":" in line:
-                    key, value = line.split(":", 1)
-                    details[key.strip().lower().replace(" ", "_")] = (
-                        value.strip()
-                    )
-            # if details:
-            #     # Attempt to create a TrademarkDetails instance
-            #     try:
-            #         details = TrademarkDetails(
-            #             trademark_name=details.get("-_trademark_name"),
-            #             status=details.get("-_status"),
-            #             serial_number=details.get("serial_number"),
-            #             international_class_number=details.get(
-            #                 "international_class_number"
-            #             ),
-            #             owner=details.get("owner"),
-            #             goods_services=details.get("goods_services"),
-            #             page_number=details.get(
-            #                 "page_number", -1
-            #             ),
-            #             registration_number=details.get(
-            #                 "registration_number"
-            #             ),
-            #             design_phrase=details.get("design_phrase", ""),
-            #         )
-            #     except ValidationError as e:
-            #         log.error(f"Validation error {e}")
-            # details["-_trademark_name"] = tm_name
-    
-            return details  # Successfully completed, return the result
+            
+            # Extract the structured response
+            function_response = response["choices"][0]["message"]["function_call"]["arguments"]
+            structured_data = json.loads(function_response)  # Convert JSON string to Python dict
+            
+            # Validate the response using Pydantic
+            validated_data = TrademarkDetails(**structured_data)
+            return validated_data.dict()  # Return validated data as a dictionary
 
+        except ValidationError as ve:
+            print(f"Validation Error: {ve.json()}")  # Log detailed validation errors
+            raise ve  # Re-raise the validation error
         except Exception as e:
             if attempt == max_retries:
                 raise  # Raise the exception if we've reached the maximum retries
             else:
-                delay = base_delay * (
-                    2 ** (attempt - 1)
-                )  # Exponential backoff
+                delay = base_delay * (2 ** (attempt - 1))  # Exponential backoff
                 delay_with_jitter = delay + random.uniform(0, jitter)
-                print(
-                    f"Attempt {attempt} failed. Retrying in {delay_with_jitter:.2f} seconds..."
-                )
+                print(f"Attempt {attempt} failed. Retrying in {delay_with_jitter:.2f} seconds...")
                 await asyncio.sleep(delay_with_jitter)
-
-#https://medium.com/@maximilian.vogel/i-scanned-1000-prompts-so-you-dont-have-to-10-need-to-know-techniques-a77bcd074d97
