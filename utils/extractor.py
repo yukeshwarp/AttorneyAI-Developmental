@@ -83,6 +83,7 @@ def extractor(doc):
     3. Ignore any other numbers or content unrelated to the trademark name and its start page number.
     4. If there are multiple page numbers listed (e.g., 32, 33), extract the first page number for the start of the trademark entry.
     5. Ensure that the extraction covers all trademarks and their respective page numbers accurately.
+    6. There migh be multiple trademarks with same name, don't swap them with anyother detail present in the index text, extract trademark name exactly.
 
     Output Format: The output should be in the following JSON format:
     [
