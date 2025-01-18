@@ -1,0 +1,15 @@
+requests
+logging
+PyMuPDF
+uuid
+redis
+openai
+asyncio
+tiktoken
+pydantic
+sentence-transformers
+fuzzywuzzy
+python-docx
+phonetics
+Metaphone
+nltk
