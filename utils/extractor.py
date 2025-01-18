@@ -3,8 +3,81 @@ import json
 import fitz
 from utils.config import *
 import logging as log
+import asyncio
+from pydantic import BaseModel, Field, ValidationError, validator
+from typing import List, Dict, Union, Optional
+from typing import List, Dict, Union
 
 llm_headers = {"Content-Type": "application/json", "api-key": llm_api_key}
+
+class TrademarkDetails(BaseModel):
+    trademark_name: str = Field(
+        ..., description="The name of the Trademark", example="DISCOVER"
+    )
+    status: str = Field(
+        ..., description="The Status of the Trademark", example="Registered"
+    )
+    serial_number: str = Field(
+        ...,
+        description="The Serial Number of the trademark from Chronology section",
+        example="87−693,628",
+    )
+    international_class_number: List[int] = Field(
+        ...,
+        description="The International class number or Nice Classes number of the trademark from Goods/Services section or Nice Classes section",
+        example=[18],
+    )
+    owner: str = Field(
+        ..., description="The owner of the trademark", example="WALMART STORES INC"
+    )
+    goods_services: str = Field(
+        ...,
+        description="The goods/services from the document",
+        example="LUGGAGE AND CARRYING BAGS; SUITCASES, TRUNKS, TRAVELLING BAGS, SLING BAGS FOR CARRYING INFANTS, SCHOOL BAGS; PURSES; WALLETS; RETAIL AND ONLINE RETAIL SERVICES",
+    )
+    page_number: int = Field(
+        ...,
+        description="The page number where the trademark details are found in the document",
+        example=3,
+    )
+    registration_number: Union[str, None] = Field(
+        None,
+        description="The Registration number of the trademark from Chronology section",
+        example="5,809,957",
+    )
+    design_phrase: str = Field(
+        "",
+        description="The design phrase of the trademark",
+        example="THE MARK CONSISTS OF THE STYLIZED WORD 'MINI' FOLLOWED BY 'BY MOTHERHOOD.'",
+    )
+
+
+@validator("filed_date")
+def validate_filed_date(cls, value):
+    # Validate date format
+    from datetime import datetime
+
+    try:
+        datetime.strptime(value, "%b %d, %Y")
+    except ValueError:
+        raise ValueError(
+            f"Invalid filed date format: {value}. Expected format is MMM DD, YYYY."
+        )
+    return value
+
+
+@validator("international_class_number", pre=True)
+def validate_class_numbers(cls, value):
+    if isinstance(value, str):
+        # Convert string to list of integers
+        try:
+            return [int(num.strip()) for num in value.split(",")]
+        except ValueError:
+            raise ValueError(
+                "Invalid international class numbers. Expected a list of integers."
+            )
+    return value
+
 
 def replace_disallowed_words(text):
     disallowed_words = {
@@ -19,11 +92,6 @@ def replace_disallowed_words(text):
     return text
 
 def extractor(doc):
-    
-    page = doc[0]
-    rect = page.rect
-    height = 50
-    clip = fitz.Rect(0, height, rect.width, rect.height - height)
     extracted_pages = []  # Array to store extracted text from each relevant page
     page_numbers = []  # Array to store corresponding page numbers
     extracted_pages2 = []  # Array to store text from all pages (optional)
@@ -160,4 +228,93 @@ def extractor(doc):
     # st_response = str(response)[7:-3]
     # record = json.loads(st_response)
     return response, ""
+
+
+async def extract_trademark_details(document_chunk: str, tm_name):
+    max_retries = 5  # Maximum number of retries
+    base_delay = 1  # Base delay in seconds
+    jitter = 0.5  # Maximum jitter to add to the delay
+    
+    for attempt in range(1, max_retries + 1):
+        try:
+            client = AzureOpenAI(
+                azure_endpoint=azure_llm_endpoint,
+                api_key=llm_api_key,
+                api_version="2024-10-01-preview",
+            )
+    
+            messages = [
+                {
+                    "role": "system",
+                    "content": "You are a data extraction specialist proficient in parsing trademark documents.",
+                },
+                {
+                    "role": "user",
+                    "content": f"""
+                    Extract the following details from the provided trademark document and present them in the exact format specified:  
+    
+                    - Trademark Name  
+                    - Status  
+                    - Serial Number  
+                    - International Class Number (as a list of integers)
+                    - Goods & Services (Goods and services are given after every international class, extract them intelligently as they may span over more than one page.)
+                    - Owner  
+                    - Filed Date (format: MMM DD, YYYY, e.g., Jun 14, 2024)  
+                    - Registration Number  
+                    - Design phrase
+    
+                    Instructions:  
+                    - Return the results in the following format, replacing the example data with the extracted information:
+                    - Ensure the output matches this format precisely.  
+                    - Do not include any additional text or explanations.  
+    
+                    Document chunk of to extract from: 
+                    Trademark name: {tm_name} 
+                    {document_chunk}  
+                """,
+                },
+            ]
+    
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: client.chat.completions.create(
+                    model="gpt-4o", messages=messages, temperature=0
+                ),
+            )
+    
+            extracted_text = response.choices[0].message.content
+            details = {}
+            for line in extracted_text.split("\n"):
+                if ":" in line:
+                    key, value = line.split(":", 1)
+                    details[key.strip().lower().replace(" ", "_")] = (
+                        value.strip()
+                    )
+            if details:
+                # Attempt to create a TrademarkDetails instance
+                try:
+                    details = TrademarkDetails(
+                        trademark_name=details.get("-_trademark_name"),
+                        status=details.get("-_status"),
+                        serial_number=details.get("serial_number"),
+                        international_class_number=details.get(
+                            "international_class_number"
+                        ),
+                        owner=details.get("owner"),
+                        goods_services=details.get("goods_services"),
+                        page_number=details.get(
+                            "page_number", page_num + 1
+                        ),
+                        registration_number=details.get(
+                            "registration_number"
+                        ),
+                        design_phrase=details.get("design_phrase", ""),
+                    )
+                except ValidationError as e:
+                    print(f"Validation error on page {page_num + 1}: {e}")
+            details["-_trademark_name"] = tm_name
+    
+            return details  # Successfully completed, return the result
+
 #https://medium.com/@maximilian.vogel/i-scanned-1000-prompts-so-you-dont-have-to-10-need-to-know-techniques-a77bcd074d97
