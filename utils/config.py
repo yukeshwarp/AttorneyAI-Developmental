@@ -1,7 +1,13 @@
 import os
 from dotenv import load_dotenv
 from openai import AzureOpenAI
+from sentence_transformers import SentenceTransformer, util
+import phonetics
+from sentence_transformers import util
+from rapidfuzz import fuzz
 
+
+semantic_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 load_dotenv()  # Load environment variables from the .env file
 
 llm_api_key = os.getenv("AZURE_API_KEY")
