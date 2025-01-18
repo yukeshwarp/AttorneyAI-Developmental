@@ -317,4 +317,17 @@ async def extract_trademark_details(document_chunk: str, tm_name):
     
             return details  # Successfully completed, return the result
 
+        except Exception as e:
+            if attempt == max_retries:
+                raise  # Raise the exception if we've reached the maximum retries
+            else:
+                delay = base_delay * (
+                    2 ** (attempt - 1)
+                )  # Exponential backoff
+                delay_with_jitter = delay + random.uniform(0, jitter)
+                print(
+                    f"Attempt {attempt} failed. Retrying in {delay_with_jitter:.2f} seconds..."
+                )
+                await asyncio.sleep(delay_with_jitter)
+
 #https://medium.com/@maximilian.vogel/i-scanned-1000-prompts-so-you-dont-have-to-10-need-to-know-techniques-a77bcd074d97
