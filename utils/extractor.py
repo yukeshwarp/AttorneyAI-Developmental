@@ -306,7 +306,7 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                         owner=details.get("owner"),
                         goods_services=details.get("goods_services"),
                         page_number=details.get(
-                            "page_number", page_num + 1
+                            "page_number", -1
                         ),
                         registration_number=details.get(
                             "registration_number"
@@ -314,7 +314,7 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                         design_phrase=details.get("design_phrase", ""),
                     )
                 except ValidationError as e:
-                    print(f"Validation error on page {page_num + 1}: {e}")
+                    log.error(f"Validation error {e}")
             details["-_trademark_name"] = tm_name
     
             return details  # Successfully completed, return the result
