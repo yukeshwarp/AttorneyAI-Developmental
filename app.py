@@ -78,6 +78,7 @@ if uploaded_files:
         st.write(Index)
         for entry in Index:
             st.write(entry)
+            
         async def parallel_extraction():
             tasks = []
             for i in range(len(Index)):
@@ -92,73 +93,11 @@ if uploaded_files:
                     extract_trademark_details(document_chunk, Index[i]["name"])
                 )
     
-             return await asyncio.gather(*tasks)
+            return await asyncio.gather(*tasks)
 
         async def process_trademarks():
             extracted_details = await parallel_extraction()
-
-            # proposed_name = "NOTES"
-            # proposed_class = "3,5,35"
-            # proposed_goods_services = "DEODORANTS, ANTIPERSPIRANTS"
-
             for details in extracted_details:
                 st.write(details)
-                # if not details or "error" in details:
-                #     continue
-
-                # comparision_result = compare_trademarks(
-                #     details, proposed_name, proposed_class, proposed_goods_services
-                # )
-
-                # conflict_grade = comparision_result.get("conflict_grade")
-                # comparison_results[conflict_grade].append(comparision_result)
-
-            # Create Word document
 
         asyncio.run(process_trademarks())
-        # # Create the document in memory
-        # doc = Document()
-        # for conflict_grade, results in comparison_results.items():
-        #     count = len(results)
-        #     doc.add_paragraph(f"{conflict_grade}: {count} entries")
-
-        #     if results:
-        #         doc.add_heading(conflict_grade, level=2)
-        #         table = doc.add_table(rows=1, cols=5)
-        #         header = table.rows[0].cells
-        #         header[0].text = "Trademark Name and Class Number"
-        #         header[1].text = "Trademark Status"
-        #         header[2].text = "Serial/Registration Number"
-        #         header[3].text = "Owner Name"
-        #         header[4].text = "Design/Word"
-
-        #         for result in results:
-        #             row = table.add_row().cells
-        #             row[0].text = (
-        #                 f"{result['Trademark name']} (Class {result['Trademark class Number']})"
-        #             )
-        #             row[1].text = result["Trademark -_status"]
-        #             row[2].text = (
-        #                 f"{result['Trademark serial number']} / {result['Trademark registration number']}"
-        #             )
-        #             row[3].text = result["Trademark -_owner"]
-        #             row[4].text = (
-        #                 "Design" if result["Trademark design phrase"] else "Word"
-        #             )
-
-        # # Save the document to a BytesIO object
-        # output = BytesIO()
-        # doc.save(output)
-        # output.seek(0)
-
-        # # Streamlit app logic
-        # st.title("Trademark Conflict Analysis")
-        # st.write("Download the trademark conflict analysis document below.")
-
-        # # Add a download button
-        # st.download_button(
-        #     label="Download Analysis Document",
-        #     data=output,
-        #     file_name="Trademark_Conflict_Analysis.docx",
-        #     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        # )
