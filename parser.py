@@ -80,10 +80,12 @@ def extractor(doc):
     previous_count = -1
     current_count = query_count()
 
-    while current_count != previous_count or iteration <= 5:
+    while current_count != previous_count:
         previous_count = current_count
         current_count = query_count()
-        iteration = iteration + 1
+        if iteration == 5:
+            log.error("Not able to extract exact number of entries from index!")
+            break
 
     prompt = f"""  
         You are tasked with extracting trademark names and their associated starting page numbers from the provided index text. Each trademark should be represented as a JSON object with:  
