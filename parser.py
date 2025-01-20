@@ -83,6 +83,7 @@ def extractor(doc):
     while current_count != previous_count:
         previous_count = current_count
         current_count = query_count()
+        iteration = iteration + 1
         if iteration == 5:
             log.error("Not able to extract exact number of entries from index!")
             break
