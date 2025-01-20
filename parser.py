@@ -82,13 +82,6 @@ def extractor(doc):
 
     while current_count != previous_count:
         previous_count = current_count
-        count_prompt = f"""
-                Previous count is wrong, count the total number of trademarks listed in the provided index text. 
-                Simply return the total count as an integer without any additional text or explanations.
-        
-                Input Text:
-                {index}
-            """
         current_count = query_count()
         iteration = iteration + 1
         if iteration == 5:
