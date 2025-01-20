@@ -290,7 +290,7 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                 )  # Exponential backoff
                 delay_with_jitter = delay + random.uniform(0, jitter)
                 print(
-                    f"Attempt {attempt} failed. Retrying in {delay_with_jitter:.2f} seconds..."
+                    f"Attempt {attempt} failed error: {e}. Retrying in {delay_with_jitter:.2f} seconds..."
                 )
                 await asyncio.sleep(delay_with_jitter)
 
