@@ -70,35 +70,39 @@ if uploaded_files:
             Index = Index[:-3]  # Remove the trailing "```"
         
         # Convert the remaining text to a Python object
-        Index = json.loads(Index)
-        #st.write(Index)
+        try:
+            Index = json.loads(Index)
+        except:
+            print("Error in json parsing:")
+
+        st.write(Index)
         # for entry in Index:
         #     st.write(entry)
-        async def parallel_extraction():
-            tasks = []
-            for i in range(len(Index)):
-                start_page = int(Index[i]["page-start"]) - 1
-                if i == len(Index) - 1:
-                    end_page = start_page + 4
-                else:
-                    end_page = int(Index[i + 1]["page-start"]) - 1
+        # async def parallel_extraction():
+        #     tasks = []
+        #     for i in range(len(Index)):
+        #         start_page = int(Index[i]["page-start"]) - 1
+        #         if i == len(Index) - 1:
+        #             end_page = start_page + 4
+        #         else:
+        #             end_page = int(Index[i + 1]["page-start"]) - 1
     
-                document_chunk = "\n".join(extracted_pages[start_page:end_page])
-                tasks.append(
-                    extract_trademark_details(document_chunk, Index[i]["name"])
-                )
+        #         document_chunk = "\n".join(extracted_pages[start_page:end_page])
+        #         tasks.append(
+        #             extract_trademark_details(document_chunk, Index[i]["name"])
+        #         )
     
-            return await asyncio.gather(*tasks)
+        #     return await asyncio.gather(*tasks)
 
-        async def process_trademarks():
-            extracted_details = await parallel_extraction()
+        # async def process_trademarks():
+        #     extracted_details = await parallel_extraction()
 
             # proposed_name = "NOTES"
             # proposed_class = "3,5,35"
             # proposed_goods_services = "DEODORANTS, ANTIPERSPIRANTS"
 
-            for details in extracted_details:
-                st.write(details)
+            # for details in extracted_details:
+            #     st.write(details)
                 # if not details or "error" in details:
                 #     continue
 
@@ -111,7 +115,7 @@ if uploaded_files:
 
             # Create Word document
 
-        asyncio.run(process_trademarks())
+        #asyncio.run(process_trademarks())
         # # Create the document in memory
         # doc = Document()
         # for conflict_grade, results in comparison_results.items():
