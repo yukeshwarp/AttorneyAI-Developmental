@@ -20,6 +20,7 @@ def extractor(doc):
     flag_uspto = False  # Flag to indicate USPTO Summary Page interval
     flag_state = False  # Flag to indicate State Summary Page interval
     index = ""
+    iteration = 0
     for page_num, page in enumerate(doc, start=1):
         # Extract text with optional clipping
         text = page.get_text()
@@ -44,6 +45,45 @@ def extractor(doc):
             log.info(text)
             index = f"""{index} \n  {text}"""
             page_numbers.append(page_num)
+            
+    # Step 1: Define a prompt to count trademarks
+    count_prompt = f"""
+        You are tasked with counting the total number of trademarks listed in the provided index text. 
+        Simply return the total count as an integer without any additional text or explanations.
+
+        Input Text:
+        {index}
+    """
+
+    def query_count():
+        count_data = {
+            "model": llm_model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant that counts trademarks.",
+                },
+                {
+                    "role": "user",
+                    "content": count_prompt,
+                },
+            ],
+            "temperature": 0.0,
+        }
+
+        count_url = f"{azure_llm_endpoint}/openai/deployments/{llm_model}/chat/completions?api-version={llm_api_version}"
+        response = requests.post(count_url, headers=llm_headers, json=count_data, timeout=120)
+        response_content = response.json()
+        return int(response_content["choices"][0]["message"]["content"].strip())
+
+    # Step 2: Iterate until count stabilizes
+    previous_count = -1
+    current_count = query_count()
+
+    while current_count != previous_count or iteration <= 5:
+        previous_count = current_count
+        current_count = query_count()
+        iteration = iteration + 1
 
     prompt = f"""  
         You are tasked with extracting trademark names and their associated starting page numbers from the provided index text. Each trademark should be represented as a JSON object with:  
@@ -88,7 +128,8 @@ def extractor(doc):
            - Return a JSON array containing the extracted trademarks and page numbers.  
            - Ensure the output matches the format shown in the example output.  
            - Do not include any additional text or explanations.  
-        
+
+        Number of entries to be extracted: {current_count}
         Input Text:
         {index}  
     """
