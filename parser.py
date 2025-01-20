@@ -254,14 +254,7 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                 ),
             )
     
-            extracted_text = response.choices[0].message.content
-            details = {}
-            for line in extracted_text.split("\n"):
-                if ":" in line:
-                    key, value = line.split(":", 1)
-                    details[key.strip().lower().replace(" ", "_")] = (
-                        value.strip()
-                    )
+            details = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
             # if details:
             #     # Attempt to create a TrademarkDetails instance
             #     try:
