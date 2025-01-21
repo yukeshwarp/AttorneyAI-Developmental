@@ -301,7 +301,6 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                                         "owner",
                                         "filed_date",
                                         "registration_number",
-                                        "design_phrase",
                                     ],
                                     "additionalProperties": False,
                                 },
