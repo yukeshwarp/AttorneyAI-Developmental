@@ -55,14 +55,8 @@ if uploaded_files:
         st.success(f"File Selected: {new_file.name}")
         pdf_bytes = new_file.read()
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-        # st.write("hi2")
-        extracted_pages = []
-        for page_num, page in enumerate(doc, start=1):
-            # Extract text with optional clipping
-            text = page.get_text()
-            text = replace_disallowed_words(text)
-            extracted_pages.append(text)
-        
+        target_search = extract_search_target(doc)
+        st.write(target_search)
         Index, document = extractor(doc)
         if Index.startswith("```json"):
             Index = Index[7:]  # Remove the "```json" part
@@ -76,8 +70,6 @@ if uploaded_files:
             print("Error in json parsing:")
 
         st.write(Index)
-        for entry in Index:
-            st.write(entry)
             
         async def parallel_extraction():
             tasks = []
