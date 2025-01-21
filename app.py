@@ -55,6 +55,12 @@ if uploaded_files:
         st.success(f"File Selected: {new_file.name}")
         pdf_bytes = new_file.read()
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        extracted_pages = []
+        for page_num, page in enumerate(doc, start=1):
+            # Extract text with optional clipping
+            text = page.get_text()
+            text = replace_disallowed_words(text)
+            extracted_pages.append(text)
         target_search = extract_search_target(doc)
         st.write(target_search)
         Index, document = extractor(doc)
