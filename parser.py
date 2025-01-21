@@ -14,7 +14,8 @@ from models import replace_disallowed_words, TrademarkDetails
 llm_headers = {"Content-Type": "application/json", "api-key": llm_api_key}
 
 async def extract_search_target(doc):
-    chunk = doc[0].get_text()
+    first_page = doc[0]
+    chunk = first_page.get_text()
     max_retries = 5  # Maximum number of retries
     base_delay = 1  # Base delay in seconds
     jitter = 0.5  # Maximum jitter to add to the delay
