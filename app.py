@@ -1,6 +1,6 @@
 import streamlit as st
 from utils.config import *
-from parser import extractor, extract_trademark_details
+from parser import extractor, extract_trademark_details, extract_search_target
 from models import replace_disallowed_words
 import requests
 import json
