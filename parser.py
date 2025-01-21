@@ -13,6 +13,87 @@ from models import replace_disallowed_words, TrademarkDetails
 
 llm_headers = {"Content-Type": "application/json", "api-key": llm_api_key}
 
+async def extract_search_target(doc):
+    chunk = doc[0].get_text()
+    max_retries = 5  # Maximum number of retries
+    base_delay = 1  # Base delay in seconds
+    jitter = 0.5  # Maximum jitter to add to the delay
+    
+    for attempt in range(1, max_retries + 1):
+        try:
+    
+            messages = [
+                {
+                    "role": "system",
+                    "content": "You are a data extraction specialist proficient in parsing trademark documents.",
+                },
+                {
+                    "role": "user",
+                    "content": f"""
+                    Extract the following details from the content provided which has details about a trademark target:  
+    
+                    "mark_searched", "classes_searched", "goods_&_services"
+                    
+                    Do not include any additional text or explanations.  
+    
+                    Document chunk to extract from: 
+                    {chunk}
+                """,
+                },
+            ]
+            tools = [
+                        {
+                            "type": "function",
+                            "function": {
+                                "name": "extract_trademark_details",
+                                "description": "Extracts trademark details from a provided document chunk.",
+                                "parameters": {
+                                    "type": "object",
+                                    "properties": {
+                                        "mark_searched": {"type": "string"},
+                                        "classes_searched": {
+                                            "type": "array",
+                                            "items": {"type": "integer"},
+                                        },
+                                        "goods_services": {"type": "string"},
+                                    },
+                                    "required": [
+                                        "mark_searched",
+                                        "classes_searched",
+                                        "goods_services",
+                                    ],
+                                    "additionalProperties": False,
+                                },
+                            },
+                        }
+                    ]
+
+                
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: client.chat.completions.create(
+                    model="gpt-4o", messages=messages, tools = tools, temperature=0
+                ),
+            )
+    
+            details = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
+            return details  # Successfully completed, return the result
+
+        except Exception as e:
+            if attempt == max_retries:
+                raise  # Raise the exception if we've reached the maximum retries
+            else:
+                delay = base_delay * (
+                    2 ** (attempt - 1)
+                )  # Exponential backoff
+                delay_with_jitter = delay + random.uniform(0, jitter)
+                print(
+                    f"Attempt {attempt} failed error: {e}. Retrying in {delay_with_jitter:.2f} seconds..."
+                )
+                await asyncio.sleep(delay_with_jitter)
+
+
 def extractor(doc):
     extracted_pages = []  # Array to store extracted text from each relevant page
     page_numbers = []  # Array to store corresponding page numbers
