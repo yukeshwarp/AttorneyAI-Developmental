@@ -13,6 +13,8 @@ from models import replace_disallowed_words, TrademarkDetails
 
 llm_headers = {"Content-Type": "application/json", "api-key": llm_api_key}
 
+semaphore = asyncio.Semaphore(3)     
+
 def extract_search_target(doc):
     first_page = doc[0]
     chunk = first_page.get_text()
@@ -235,126 +237,126 @@ async def extract_trademark_details(document_chunk: str, tm_name):
     max_retries = 5  # Maximum number of retries
     base_delay = 1  # Base delay in seconds
     jitter = 0.5  # Maximum jitter to add to the delay
-    
-    for attempt in range(1, max_retries + 1):
-        try:
-    
-            messages = [
-                {
-                    "role": "system",
-                    "content": "You are a data extraction specialist proficient in parsing trademark documents.",
-                },
-                {
-                    "role": "user",
-                    "content": f"""
-                    Extract the following details from the provided trademark document and present them in the exact format specified:  
-    
-                    - Trademark Name  
-                    - Status  
-                    - Serial Number  
-                    - International Class Number (as a list of integers)
-                    - Goods & Services (Goods and services are given after every international class, extract them intelligently as they may span over more than one page.)
-                    - Owner  
-                    - Filed Date (format: MMM DD, YYYY, e.g., Jun 14, 2024)  
-                    - Registration Number  
-                    - Design phrase
-    
-                    Instructions:  
-                    - Return the results in the following format, replacing the example data with the extracted information:
-                    - Ensure the output matches this format precisely.  
-                    - Do not include any additional text or explanations.  
-    
-                    Document chunk of to extract from: 
-                    Trademark name: {tm_name} 
-                    {document_chunk}  
-                """,
-                },
-            ]
-            tools = [
-                        {
-                            "type": "function",
-                            "function": {
-                                "name": "extract_trademark_details",
-                                "description": "Extracts trademark details from a provided document chunk.",
-                                "parameters": {
-                                    "type": "object",
-                                    "properties": {
-                                        "trademark_name": {"type": "string"},
-                                        "status": {"type": "string"},
-                                        "serial_number": {"type": "string"},
-                                        "international_class_number": {
-                                            "type": "array",
-                                            "items": {"type": "integer"},
+    async with semaphore:
+        for attempt in range(1, max_retries + 1):
+            try:
+        
+                messages = [
+                    {
+                        "role": "system",
+                        "content": "You are a data extraction specialist proficient in parsing trademark documents.",
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""
+                        Extract the following details from the provided trademark document and present them in the exact format specified:  
+        
+                        - Trademark Name  
+                        - Status  
+                        - Serial Number  
+                        - International Class Number (as a list of integers)
+                        - Goods & Services (Goods and services are given after every international class, extract them intelligently as they may span over more than one page.)
+                        - Owner  
+                        - Filed Date (format: MMM DD, YYYY, e.g., Jun 14, 2024)  
+                        - Registration Number  
+                        - Design phrase
+        
+                        Instructions:  
+                        - Return the results in the following format, replacing the example data with the extracted information:
+                        - Ensure the output matches this format precisely.  
+                        - Do not include any additional text or explanations.  
+        
+                        Document chunk of to extract from: 
+                        Trademark name: {tm_name} 
+                        {document_chunk}  
+                    """,
+                    },
+                ]
+                tools = [
+                            {
+                                "type": "function",
+                                "function": {
+                                    "name": "extract_trademark_details",
+                                    "description": "Extracts trademark details from a provided document chunk.",
+                                    "parameters": {
+                                        "type": "object",
+                                        "properties": {
+                                            "trademark_name": {"type": "string"},
+                                            "status": {"type": "string"},
+                                            "serial_number": {"type": "string"},
+                                            "international_class_number": {
+                                                "type": "array",
+                                                "items": {"type": "integer"},
+                                            },
+                                            "goods_services": {"type": "string"},
+                                            "owner": {"type": "string"},
+                                            "filed_date": {"type": "string"},
+                                            "registration_number": {"type": "string"},
+                                            "design_phrase": {"type": "string"},
                                         },
-                                        "goods_services": {"type": "string"},
-                                        "owner": {"type": "string"},
-                                        "filed_date": {"type": "string"},
-                                        "registration_number": {"type": "string"},
-                                        "design_phrase": {"type": "string"},
+                                        "required": [
+                                            "trademark_name",
+                                            "status",
+                                            "serial_number",
+                                            "international_class_number",
+                                            "goods_services",
+                                            "owner",
+                                            "filed_date",
+                                            "registration_number",
+                                        ],
+                                        "additionalProperties": False,
                                     },
-                                    "required": [
-                                        "trademark_name",
-                                        "status",
-                                        "serial_number",
-                                        "international_class_number",
-                                        "goods_services",
-                                        "owner",
-                                        "filed_date",
-                                        "registration_number",
-                                    ],
-                                    "additionalProperties": False,
                                 },
-                            },
-                        }
-                    ]
-
-                
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None,
-                lambda: client.chat.completions.create(
-                    model="gpt-4o", messages=messages, tools = tools, temperature=0
-                ),
-            )
+                            }
+                        ]
     
-            details = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
-            # if details:
-            #     # Attempt to create a TrademarkDetails instance
-            #     try:
-            #         details = TrademarkDetails(
-            #             trademark_name=details.get("-_trademark_name"),
-            #             status=details.get("-_status"),
-            #             serial_number=details.get("serial_number"),
-            #             international_class_number=details.get(
-            #                 "international_class_number"
-            #             ),
-            #             owner=details.get("owner"),
-            #             goods_services=details.get("goods_services"),
-            #             page_number=details.get(
-            #                 "page_number", -1
-            #             ),
-            #             registration_number=details.get(
-            #                 "registration_number"
-            #             ),
-            #             design_phrase=details.get("design_phrase", ""),
-            #         )
-            #     except ValidationError as e:
-            #         log.error(f"Validation error {e}")
-            # details["-_trademark_name"] = tm_name
-    
-            return details  # Successfully completed, return the result
-
-        except Exception as e:
-            if attempt == max_retries:
-                raise  # Raise the exception if we've reached the maximum retries
-            else:
-                delay = base_delay * (
-                    2 ** (attempt - 1)
-                )  # Exponential backoff
-                delay_with_jitter = delay + random.uniform(0, jitter)
-                print(
-                    f"Attempt {attempt} failed error: {e}. Retrying in {delay_with_jitter:.2f} seconds..."
+                    
+                loop = asyncio.get_event_loop()
+                response = await loop.run_in_executor(
+                    None,
+                    lambda: client.chat.completions.create(
+                        model="gpt-4o", messages=messages, tools = tools, temperature=0
+                    ),
                 )
-                await asyncio.sleep(delay_with_jitter)
-
-#https://medium.com/@maximilian.vogel/i-scanned-1000-prompts-so-you-dont-have-to-10-need-to-know-techniques-a77bcd074d97
+        
+                details = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
+                # if details:
+                #     # Attempt to create a TrademarkDetails instance
+                #     try:
+                #         details = TrademarkDetails(
+                #             trademark_name=details.get("-_trademark_name"),
+                #             status=details.get("-_status"),
+                #             serial_number=details.get("serial_number"),
+                #             international_class_number=details.get(
+                #                 "international_class_number"
+                #             ),
+                #             owner=details.get("owner"),
+                #             goods_services=details.get("goods_services"),
+                #             page_number=details.get(
+                #                 "page_number", -1
+                #             ),
+                #             registration_number=details.get(
+                #                 "registration_number"
+                #             ),
+                #             design_phrase=details.get("design_phrase", ""),
+                #         )
+                #     except ValidationError as e:
+                #         log.error(f"Validation error {e}")
+                # details["-_trademark_name"] = tm_name
+        
+                return details  # Successfully completed, return the result
+    
+            except Exception as e:
+                if attempt == max_retries:
+                    raise  # Raise the exception if we've reached the maximum retries
+                else:
+                    delay = base_delay * (
+                        2 ** (attempt - 1)
+                    )  # Exponential backoff
+                    delay_with_jitter = delay + random.uniform(0, jitter)
+                    print(
+                        f"Attempt {attempt} failed error: {e}. Retrying in {delay_with_jitter:.2f} seconds..."
+                    )
+                    await asyncio.sleep(delay_with_jitter)
+    
+    #https://medium.com/@maximilian.vogel/i-scanned-1000-prompts-so-you-dont-have-to-10-need-to-know-techniques-a77bcd074d97
