@@ -262,7 +262,10 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                         Instructions:  
                         - Return the results in the following format, replacing the example data with the extracted information:
                         - Ensure the output matches this format precisely.  
-                        - Do not include any additional text or explanations.  
+                        - Do not include any additional text or explanations. 
+                        - Only extract information that is present in the document.  
+                        - If a field is not found, set its value to `null`.  
+                        - Do not make up or infer any information that is not explicitly stated. 
         
                         Document chunk of to extract from: 
                         Trademark name: {tm_name} 
@@ -290,7 +293,7 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                                         "owner": {"type": "string"},
                                         "filed_date": {"type": "string"},
                                         "registration_number": {"type": "string"},
-                                        "design_phrase": {"type": "string"},
+                                        "design_phrase": {"type": ["string", "null"]},
                                     },
                                     "required": [
                                         "trademark_name",
