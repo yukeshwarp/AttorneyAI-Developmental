@@ -253,13 +253,13 @@ async def extract_trademark_details(document_chunk: str, tm_name):
         
                         - Trademark Name  
                         - Status  
-                        - Serial Number  
+                        - Serial Number  (Return "null" if not present)
                         - International Class Number (as a list of integers)
                         - Goods & Services (Goods and services are given after every international class, extract them intelligently as they may span over more than one page.)
                         - Owner  
-                        - Filed Date (format: MMM DD, YYYY, e.g., Jun 14, 2024)  
-                        - Registration Number  
-                        - Design phrase
+                        - Filed Date (format: MMM DD, YYYY, e.g., Jun 14, 2024, Return "null" if not present)  
+                        - Registration Number  (Return "null" if not present)
+                        - Design phrase (Return "null" if not present)
         
                         Instructions:  
                         - Return the results in the following format, replacing the example data with the extracted information:
@@ -297,12 +297,9 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                                         "required": [
                                             "trademark_name",
                                             "status",
-                                            "serial_number",
                                             "international_class_number",
                                             "goods_services",
                                             "owner",
-                                            "filed_date",
-                                            "registration_number",
                                         ],
                                         "additionalProperties": False,
                                     },
@@ -318,8 +315,13 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                         model="gpt-4o", messages=messages, tools = tools, temperature=0
                     ),
                 )
-        
-                details = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
+                if hasattr(response.choices[0].message, 'function_call'):  
+                    details = json.loads(response.choices[0].message.function_call["arguments"])  
+                    return details  # Successfully completed, return the result  
+                else:  
+                    log.error("No function_call in response")  
+                    return None
+                #details = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
                 # if details:
                 #     # Attempt to create a TrademarkDetails instance
                 #     try:
@@ -343,8 +345,7 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                 #     except ValidationError as e:
                 #         log.error(f"Validation error {e}")
                 # details["-_trademark_name"] = tm_name
-        
-                return details  # Successfully completed, return the result
+                
     
             except Exception as e:
                 if attempt == max_retries:
