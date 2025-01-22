@@ -251,13 +251,13 @@ async def extract_trademark_details(document_chunk: str, tm_name):
         
                         - Trademark Name  
                         - Status  
-                        - Serial Number  (Return "null" if not present)
+                        - Serial Number  (Return null if not present)
                         - International Class Number (as a list of integers)
                         - Goods & Services (Goods and services are given after every international class, extract them intelligently as they may span over more than one page.)
                         - Owner  
-                        - Filed Date (format: MMM DD, YYYY, e.g., Jun 14, 2024, Return "null" if not present)  
-                        - Registration Number  (Return "null" if not present)
-                        - Design phrase (Return "null" if not present)
+                        - Filed Date (format: MMM DD, YYYY, e.g., Jun 14, 2024, Return null if not present)  
+                        - Registration Number  (Return null if not present)
+                        - Design phrase (Return null if not present)
         
                         Instructions:  
                         - Return the results in the following format, replacing the example data with the extracted information:
