@@ -266,6 +266,8 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                         - Only extract information that is present in the document.  
                         - If a field is not found, set its value to `null`.  
                         - Do not make up or infer any information that is not explicitly stated. 
+                        - For the **design_phrase**, extract it only if it is explicitly labeled as "Design Phrase" or "Design Mark."  
+                        - Ignore headers, footers, or repeated phrases that are not explicitly associated with the fields.
         
                         Document chunk of to extract from: 
                         Trademark name: {tm_name} 
