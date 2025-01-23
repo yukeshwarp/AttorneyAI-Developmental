@@ -38,7 +38,6 @@ comparison_results = {
     "Low": [],
     "No-conflict": [],
 }
-doc = Document()
 
 if uploaded_files:
     new_files = []
@@ -52,7 +51,7 @@ if uploaded_files:
             and uploaded_file.name not in st.session_state.removed_documents
         ):
             new_files.append(uploaded_file)
-
+    extracted_details = []
     for new_file in new_files:
         st.success(f"File Selected: {new_file.name}")
         pdf_bytes = new_file.read()
@@ -64,10 +63,6 @@ if uploaded_files:
             text = replace_disallowed_words(text)
             extracted_pages.append(text)
         target_search = extract_search_target(doc)
-        if target_search:
-            doc.add_heading("Target search:")
-            doc.add_paragraph(f"Proposed trademark: {target_search["mark_searched"]}\nSearch classes: {target_search["classes_searched"]}\nSearch Goods/Services: {target_search["goods_services"]}")
-            doc.add_heading("Details extracted")
         st.write(target_search)
         Index, document = extractor(doc)
         if Index.startswith("```json"):
@@ -101,17 +96,21 @@ if uploaded_files:
 
         async def process_trademarks():
             extracted_details = await parallel_extraction()
-            count = len(extracted_details)
-            doc.add_paragraph(f"Total no. of trademarks extracted: {count}")
             for details in extracted_details:
                 st.write(details)
-                doc.add_paragraph(f"Trademark name: {details["trademark_name"]}\nStatus: {details["status"]}\nSerial/Registration Number: {details["serial_number"]}/{details["registration_number"]}\nInternational Class: {details["international_class_number"]}\nGoods/Services: {details["goods_services"]}\nOwner: {details["owner"]}\nFiled Date: {details["filed_date"]}\nDesign Phrase: {details["design_phrase"]}")
-        
-
 
         asyncio.run(process_trademarks())
 
-    
+    doc = Document()
+    count = len(extracted_details)
+    doc.add_paragraph(f"Total no. of trademarks extracted: {count}")
+    if target_search:
+        doc.add_heading("Target search:")
+        doc.add_paragraph(f"Proposed trademark: {target_search["mark_searched"]}\nSearch classes: {target_search["classes_searched"]}\nSearch Goods/Services: {target_search["goods_services"]}")
+        doc.add_heading("Details extracted")
+    for details in extracted_details:
+        doc.add_paragraph(f"Trademark name: {details["trademark_name"]}\nStatus: {details["status"]}\nSerial/Registration Number: {details["serial_number"]}/{details["registration_number"]}\nInternational Class: {details["international_class_number"]}\nGoods/Services: {details["goods_services"]}\nOwner: {details["owner"]}\nFiled Date: {details["filed_date"]}\nDesign Phrase: {details["design_phrase"]}")
+
     output = BytesIO()
     doc.save(output)
     output.seek(0)
