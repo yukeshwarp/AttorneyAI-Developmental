@@ -115,16 +115,9 @@ def extractor(doc):
             index = f"""{index} \n  {text}"""
             page_numbers.append(page_num)
             
-    # Step 1: Define a prompt to count trademarks
-    count_prompt = f"""
-        You are tasked with counting the total number of trademarks listed in the provided index text. 
-        Simply return the total count as an integer without any additional text or explanations.
 
-        Input Text:
-        {index}
-    """
 
-    def query_count():
+    def query_count(count_prompt):
         count_data = {
             "model": llm_model,
             "messages": [
@@ -147,11 +140,26 @@ def extractor(doc):
 
     # Step 2: Iterate until count stabilizes
     previous_count = -1
-    current_count = query_count()
+    count_prompt = f"""
+        You are tasked with counting the total number of trademarks listed in the provided index text. 
+        Simply return the total count as an integer without any additional text or explanations.
+
+        Input Text:
+        {index}
+    """
+    current_count = query_count(count_prompt)
 
     while current_count != previous_count:
         previous_count = current_count
-        current_count = query_count()
+        count_prompt = f"""
+        You are tasked with counting the total number of trademarks in the provided index text. 
+        Ensure the count is accurate and consistent with the previously given count of {previous_count}. 
+        If the current count differs, confirm and provide only the updated total as an integer.
+        
+        Input Text:
+        {index}
+        """
+        current_count = query_count(count_prompt)
         iteration = iteration + 1
         if iteration == 5:
             log.error("Not able to extract exact number of entries from index!")
