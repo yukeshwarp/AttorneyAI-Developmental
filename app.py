@@ -101,7 +101,7 @@ if uploaded_files:
 
         asyncio.run(process_trademarks())
 
-    doc = document()
+    doc = Document()
     count = len(extracted_details)
     doc.add_paragraph(f"Total no. of trademarks extracted: {count}")
     if target_search:
