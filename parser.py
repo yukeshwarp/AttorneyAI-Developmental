@@ -327,7 +327,7 @@ async def extract_trademark_details(document_chunk: str, tm_name, target):
             if hasattr(response.choices[0].message, 'function_call'):  
                 details = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
                 if details['design_phrase'] == target:
-                    details['design_phrase'] = NULL
+                    details['design_phrase'] = null
                 return details  # Successfully completed, return the result  
             else:  
                 log.error("No function_call in response")  
