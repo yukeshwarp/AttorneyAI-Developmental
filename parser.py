@@ -140,6 +140,7 @@ def extractor(doc):
 
     # Step 2: Iterate until count stabilizes
     previous_count = -1
+    bprevious_count = previous_count
     count_prompt = f"""
         You are tasked with counting the total number of trademarks listed in the provided index text. 
         Simply return the total count as an integer without any additional text or explanations.
@@ -149,7 +150,8 @@ def extractor(doc):
     """
     current_count = query_count(count_prompt)
 
-    while current_count != previous_count:
+    while current_count != previous_count and bprevious_count >= current_count:
+        bprevious_count = previous_count
         previous_count = current_count
         count_prompt = f"""
         You are tasked with counting the total number of trademarks in the provided index text. 
