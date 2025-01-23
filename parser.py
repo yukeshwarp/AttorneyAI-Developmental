@@ -85,9 +85,14 @@ def extractor(doc):
     flag_state = False  # Flag to indicate State Summary Page interval
     index = ""
     iteration = 0
+    page = doc[0]
+    rect = page.rect
+    height = 50
+    clip = fitz.Rect(0, height, rect.width, rect.height-height)
+    text = page.get_text(clip=clip)
     for page_num, page in enumerate(doc, start=1):
         # Extract text with optional clipping
-        text = page.get_text()
+        text = page.get_text(clip=clip)
         text = replace_disallowed_words(text)
         extracted_pages2.append(text)
 
