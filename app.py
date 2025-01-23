@@ -88,7 +88,7 @@ if uploaded_files:
     
                 document_chunk = "\n".join(extracted_pages[start_page:end_page])
                 tasks.append(
-                    extract_trademark_details(document_chunk, Index[i]["name"])
+                    extract_trademark_details(document_chunk, Index[i]["name"], target_search['mark_searched'])
                 )
     
             return await asyncio.gather(*tasks)
