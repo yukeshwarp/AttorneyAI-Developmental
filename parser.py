@@ -236,7 +236,7 @@ def extractor(doc):
     return response, ""
 
 
-async def extract_trademark_details(document_chunk: str, tm_name):
+async def extract_trademark_details(document_chunk: str, tm_name, target):
     max_retries = 5  # Maximum number of retries
     base_delay = 1  # Base delay in seconds
     jitter = 0.5  # Maximum jitter to add to the delay
@@ -323,8 +323,11 @@ async def extract_trademark_details(document_chunk: str, tm_name):
                     model="gpt-4o", messages=messages, tools = tools, temperature=0
                 ),
             )
+            
             if hasattr(response.choices[0].message, 'function_call'):  
                 details = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
+                if details['design_phrase'] == target:
+                    details['design_phrase'] = NULL
                 return details  # Successfully completed, return the result  
             else:  
                 log.error("No function_call in response")  
