@@ -10,6 +10,7 @@ import fitz
 import uuid
 import asyncio
 import json
+from docx import Document
 
 
 if "documents" not in st.session_state:
@@ -99,3 +100,29 @@ if uploaded_files:
                 st.write(details)
 
         asyncio.run(process_trademarks())
+
+    doc = document()
+    count = len(extracted_details)
+    doc.add_paragraph(f"Total no. of trademarks extracted: {count}")
+    if target_search:
+        doc.add_heading("Target search:")
+        doc.add_paragraph(f"Proposed trademark: {target_search["mark_searched"]}\nSearch classes: {target_search["classes_searched"]}\nSearch Goods/Services: {target_search["goods_services"]}")
+        doc.add_heading("Details extracted")
+    for details in extracted_details:
+        doc.add_paragraph(f"Trademark name: {details["trademark_name"]}\nStatus: {details["status"]}\nSerial/Registration Number: {details["serial_number"]}/{details["registration_number"]}\nInternational Class: {details["international_class_number"]}\nGoods/Services: {details["goods_services"]}\nOwner: {details["owner"]}\nFiled Date: {details["filed_date"]}\nDesign Phrase: {details["design_phrase"]}")
+
+    output = BytesIO()
+    doc.save(output)
+    output.seek(0)
+
+    # Streamlit app logic
+    st.title("Trademark Conflict Analysis")
+    st.write("Download the trademark conflict analysis document below.")
+
+    # Add a download button
+    st.download_button(
+        label="Download Analysis Document",
+        data=output,
+        file_name="Trademark_Conflict_Analysis.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
