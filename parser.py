@@ -15,7 +15,8 @@ llm_headers = {"Content-Type": "application/json", "api-key": llm_api_key}
 
 def extract_search_target(doc):
     first_page = doc[0]
-    chunk = first_page.get_text()
+    second_page = doc[1]
+    chunk = first_page.get_text() + second_page.get_text()
 
     try:
 
@@ -104,10 +105,10 @@ def extractor(doc):
         elif "ANALYST REVIEW −USPTO REPORT" in text:
             flag_uspto = False
 
-        # if "State Summary Page" in text:
-        #     flag_state = True
-        # elif "ANALYST REVIEW −STATE REPORT" in text:
-        #     flag_state = False
+        if "United States PTO Overview List" in text:
+            flag_state = True
+        elif "US-1" in text:
+            flag_state = False
 
         # Store relevant text and page numbers for both intervals
         if flag_uspto or flag_state:
