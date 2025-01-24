@@ -197,6 +197,7 @@ def extractor(doc):
         1. Trademark Name Extraction:
            - The trademark name is located immediately before the words "Registered," "Published," or "Cancelled."  
            - Extract the trademark name exactly as it appears without alterations.  
+           - Extract all trademark entries irrespective of their classification and status.
         
         2. Page Number Extraction:
            - The start page number is the last number in each entry.  
