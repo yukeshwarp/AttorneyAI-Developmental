@@ -84,6 +84,7 @@ if uploaded_files:
         st.write(Index)
             
         async def parallel_extraction():
+            semaphore = asyncio.Semaphore(10)  # Limit to 10 concurrent tasks
             tasks = []
             for i in range(len(Index)):
                 start_page = int(Index[i]["page-start"]) - 1
@@ -91,13 +92,14 @@ if uploaded_files:
                     end_page = start_page + 4
                 else:
                     end_page = int(Index[i + 1]["page-start"]) - 1
-    
+        
                 document_chunk = "\n".join(extracted_pages[start_page:end_page])
                 tasks.append(
-                    extract_trademark_details(document_chunk, Index[i]["name"], target_search['mark_searched'])
+                    extract_trademark_details(document_chunk, Index[i]["name"], target_search['mark_searched'], semaphore)
                 )
-    
+        
             return await asyncio.gather(*tasks)
+
 
         async def process_trademarks():
             extracted_details = await parallel_extraction()
