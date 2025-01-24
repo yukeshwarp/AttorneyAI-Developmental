@@ -342,33 +342,6 @@ async def extract_trademark_details(document_chunk: str, tm_name, target):
             else:  
                 log.error("No function_call in response")  
                 return None
-            #details = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
-            # if details:
-            #     # Attempt to create a TrademarkDetails instance
-            #     try:
-            #         details = TrademarkDetails(
-            #             trademark_name=details.get("-_trademark_name"),
-            #             status=details.get("-_status"),
-            #             serial_number=details.get("serial_number"),
-            #             international_class_number=details.get(
-            #                 "international_class_number"
-            #             ),
-            #             owner=details.get("owner"),
-            #             goods_services=details.get("goods_services"),
-            #             page_number=details.get(
-            #                 "page_number", -1
-            #             ),
-            #             registration_number=details.get(
-            #                 "registration_number"
-            #             ),
-            #             design_phrase=details.get("design_phrase", ""),
-            #         )
-            #     except ValidationError as e:
-            #         log.error(f"Validation error {e}")
-            # details["-_trademark_name"] = tm_name
-    
-            #return details  # Successfully completed, return the result
-
         except Exception as e:
             if attempt == max_retries:
                 raise  # Raise the exception if we've reached the maximum retries
@@ -381,5 +354,3 @@ async def extract_trademark_details(document_chunk: str, tm_name, target):
                     f"Attempt {attempt} failed error: {e}. Retrying in {delay_with_jitter:.2f} seconds..."
                 )
                 await asyncio.sleep(delay_with_jitter)
-
-#https://medium.com/@maximilian.vogel/i-scanned-1000-prompts-so-you-dont-have-to-10-need-to-know-techniques-a77bcd074d97
