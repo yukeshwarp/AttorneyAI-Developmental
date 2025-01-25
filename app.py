@@ -67,7 +67,7 @@ if uploaded_files:
         target_search = extract_search_target(doc)
         if target_search:
             docu.add_heading("Target search:")
-            docu.add_paragraph(f"Proposed trademark: {target_search["mark_searched"]}\nSearch classes: {target_search["classes_searched"]}\nSearch Goods/Services: {target_search["goods_services"]}")
+            docu.add_paragraph(f"Proposed trademark: {target_search["mark_searched"]}\nSearch classes: {target_search["target_class"]}\nSearch Goods/Services: {target_search["goods_services"]}")
             docu.add_heading("Details extracted")
         st.write(target_search)
         Index, document = extractor(doc)
@@ -113,7 +113,7 @@ if uploaded_files:
             count = len(extracted_details)
             docu.add_paragraph(f"Total no. of trademarks extracted: {count}")
             proposed_name = target_search["mark_searched"]
-            proposed_class = target_search["classes_searched"]
+            proposed_class = target_search["target_class"]
             proposed_goods_services = target_search["goods_services"]
 
             for details in extracted_details:
