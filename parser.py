@@ -31,10 +31,10 @@ def extract_search_target(doc):
                 "content": f"""
                 Extract the following details from the content provided which has details about a trademark target:  
 
-                "mark_searched", "classes_searched", "goods_&_services"
+                "mark_searched", "target_class", "goods_&_services"
                 
                 Do not include any additional text or explanations.  
-                Determine classes_searched based on the international trademark classes that the goods_&_services comes under, not based on the classes_searched given in the document chunk.
+                Determine target_class based on the international trademark classes that the goods_&_services comes under.
 
                 Document chunk to extract from: 
                 {chunk}
@@ -51,7 +51,7 @@ def extract_search_target(doc):
                                 "type": "object",
                                 "properties": {
                                     "mark_searched": {"type": "string"},
-                                    "classes_searched": {
+                                    "target_class": {
                                         "type": "array",
                                         "items": {"type": "integer"},
                                     },
@@ -59,7 +59,7 @@ def extract_search_target(doc):
                                 },
                                 "required": [
                                     "mark_searched",
-                                    "classes_searched",
+                                    "target_class",
                                     "goods_services",
                                 ],
                                 "additionalProperties": False,
