@@ -11,7 +11,8 @@ import requests
 import json
 import asyncio
 import phonetics
-
+import nltk
+nltk.download('wordnet')
 
 def compare_trademarks2(
     existing_trademark: List[Dict[str, Union[str, List[int]]]],
