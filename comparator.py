@@ -20,7 +20,7 @@ def compare_trademarks2(
     proposed_class,
     proposed_goods_services: str,
 ) -> List[Dict[str, Union[str, int]]]:
-    proposed_classes = proposed_class
+    proposed_classes: List[int] = list(proposed_class)
 
     # Prepare the messages for the Azure OpenAI API
     messages = [
@@ -207,8 +207,8 @@ def compare_trademarks(
     proposed_goods_services: str,
 ) -> Dict[str, Union[str, int]]:
     # Convert proposed classes to a list of integers
-    international_class_numbers = existing_trademark["international_class_number"]
-    proposed_classes = proposed_class
+    international_class_numbers: List[int] = list(existing_trademark["international_class_number"])
+    proposed_classes: List[int] = list(proposed_class)
     if not (any(cls in international_class_numbers for cls in proposed_classes)):
         return assess_conflict(
             existing_trademark, proposed_name, proposed_class, proposed_goods_services
