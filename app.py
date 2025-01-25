@@ -1,6 +1,7 @@
 import streamlit as st
 from utils.config import *
 from parser import extractor, extract_trademark_details, extract_search_target
+from comparator import *
 from models import replace_disallowed_words
 import requests
 import json
@@ -100,20 +101,71 @@ if uploaded_files:
         
             return await asyncio.gather(*tasks)
 
-
+        comparison_results = {
+            "High": [],
+            "Moderate": [],
+            "Name-Match": [],
+            "Low": [],
+            "No-conflict": [],
+        }
         async def process_trademarks():
             extracted_details = await parallel_extraction()
             count = len(extracted_details)
             docu.add_paragraph(f"Total no. of trademarks extracted: {count}")
+            proposed_name = target_search["mark_searched"]
+            proposed_class = target_search["classes_searched"]
+            proposed_goods_services = target_search["goods_services"]
+
             for details in extracted_details:
+                if not details or "error" in details:
+                    continue
                 st.write(details)
                 docu.add_paragraph(f"Trademark name: {details["trademark_name"]}\nStatus: {details["status"]}\nSerial/Registration Number: {details["serial_number"]}/{details["registration_number"]}\nInternational Class: {details["international_class_number"]}\nGoods/Services: {details["goods_services"]}\nOwner: {details["owner"]}\nFiled Date: {details["filed_date"]}\nDesign Phrase: {details["design_phrase"]}")
+                comparision_result = compare_trademarks(
+                    details, proposed_name, proposed_class, proposed_goods_services
+                )
+
+                conflict_grade = comparision_result.get("conflict_grade")
+                comparison_results[conflict_grade].append(comparision_result)
 
         asyncio.run(process_trademarks())
 
     
-    
-    
+    for conflict_grade, results in comparison_results.items():
+        count = len(results)
+        docu.add_paragraph(f"{conflict_grade}: {count} entries")
+
+    for conflict_grade, results in comparison_results.items():
+        if results:
+            docu.add_heading(conflict_grade, level=2)
+            table = docu.add_table(rows=1, cols=5)
+            header = table.rows[0].cells
+            header[0].text = "Trademark Name and Class Number"
+            header[1].text = "Trademark Status"
+            header[2].text = "Serial/Registration Number"
+            header[3].text = "Owner Name"
+            header[4].text = "Design/Word"
+
+            for result in results:
+                row = table.add_row().cells
+                row[0].text = (
+                    f"{result['Trademark name']} (Class {result['Trademark class Number']})"
+                )
+                row[1].text = result["Trademark -_status"]
+                row[2].text = (
+                    f"{result['Trademark serial number']} / {result['Trademark registration number']}"
+                )
+                row[3].text = result["Trademark -_owner"]
+                row[4].text = (
+                    "Design" if result["Trademark design phrase"] else "Word"
+                )
+    for conflict_grade, results in comparison_results.items():
+        for result in results:
+            docu.add_paragraph(
+                f"{result['Trademark name']} reasoning: {result['reasoning']}\n"
+            )
+
+
     #for details in extracted_details:
         
 
