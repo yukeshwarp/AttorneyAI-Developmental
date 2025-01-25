@@ -264,6 +264,14 @@ async def extract_trademark_details(document_chunk: str, tm_name, target, semaph
     document_chunk_cleaned = re.sub(
         goods_services_pattern, "", document_chunk, flags=re.DOTALL
     )
+    
+    if goods_services != "null":
+        intl_class_pattern = r"International Class (\d+):"
+        international_class_numbers = list(
+            map(int, re.findall(intl_class_pattern, goods_services))
+        )
+    else:
+        international_class_numbers = []
 
     async with semaphore:  # Acquire semaphore before executing
         for attempt in range(1, max_retries + 1):
@@ -354,6 +362,7 @@ async def extract_trademark_details(document_chunk: str, tm_name, target, semaph
 
                     # Add the extracted goods/services to the structured output
                     details["goods_services"] = goods_services
+                    details["international_class_number"] = international_class_numbers
 
                     return details  # Successfully completed, return the result
                 else:
