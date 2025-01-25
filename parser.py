@@ -34,6 +34,7 @@ def extract_search_target(doc):
                 "mark_searched", "classes_searched", "goods_&_services"
                 
                 Do not include any additional text or explanations.  
+                Determine classes_searched based on the international trademark classes that the goods_&_services comes under, not based on the classes_searched given in the document chunk.
 
                 Document chunk to extract from: 
                 {chunk}
