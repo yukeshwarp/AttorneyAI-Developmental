@@ -448,10 +448,6 @@ def compare_trademarks(
         answer = response.choices[0].message.content.strip().lower()
         return "yes" in answer.lower()
 
-    # Condition 2: Overlap in International Class Numbers
-    international_class_numbers = ast.literal_eval(
-        existing_trademark["international_class_number"]
-    )
 
     # Check if any class in proposed_classes is in the international_class_numbers
     condition_2_satisfied = any(
