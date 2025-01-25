@@ -1,6 +1,16 @@
 import ast
 import requests
 from utils.config import *
+from rapidfuzz import fuzz
+from typing import List, Dict, Union, Optional
+from openai import AzureOpenAI
+import re
+import fitz
+import random
+import requests
+import json
+import asyncio
+import phonetics
 
 
 def compare_trademarks2(
@@ -55,20 +65,7 @@ def compare_trademarks2(
         },
     ]
 
-    # Initialize the Azure OpenAI client
-    azure_endpoint = azure_llm_endpoint
-    api_key = llm_api_key
 
-    if not azure_endpoint or not api_key:
-        raise ValueError(
-            "Azure endpoint or API key is not set in environment variables."
-        )
-
-    client = AzureOpenAI(
-        azure_endpoint=azure_llm_endpoint,
-        api_key=llm_api_key,
-        api_version="2024-10-01-preview",
-    )
 
     # Call Azure OpenAI to get the response
     try:
@@ -271,13 +268,6 @@ def compare_trademarks(
         from openai import AzureOpenAI
         import os
 
-        azure_endpoint = azure_llm_endpoint
-        api_key = llm_api_key
-        client = AzureOpenAI(
-            azure_endpoint=azure_endpoint,
-            api_key=api_key,
-            api_version="2024-10-01-preview",
-        )
 
         prompt = f"""  
             Are the following two trademark names considered exact matches, accounting for minor variations such as special characters, punctuation, or formatting? Respond with 'Yes' or 'No'.  
@@ -326,13 +316,6 @@ def compare_trademarks(
         Trademark Name 2: "{name2}"  
         """
 
-        azure_endpoint = azure_llm_endpoint
-        api_key = llm_api_key
-        client = AzureOpenAI(
-            azure_endpoint=azure_endpoint,
-            api_key=api_key,
-            api_version="2024-10-01-preview",
-        )
 
         messages = [
             {
@@ -385,13 +368,6 @@ def compare_trademarks(
             {"role": "user", "content": prompt},
         ]
 
-        azure_endpoint = azure_llm_endpoint
-        api_key = llm_api_key
-        client = AzureOpenAI(
-            azure_endpoint=azure_endpoint,
-            api_key=api_key,
-            api_version="2024-10-01-preview",
-        )
 
         response = client.chat.completions.create(
             model="gpt-4o",
@@ -461,14 +437,6 @@ def compare_trademarks(
             },
             {"role": "user", "content": prompt},
         ]
-
-        azure_endpoint = azure_llm_endpoint
-        api_key = llm_api_key
-        client = AzureOpenAI(
-            azure_endpoint=azure_endpoint,
-            api_key=api_key,
-            api_version="2024-10-01-preview",
-        )
 
         response = client.chat.completions.create(
             model="gpt-4o",
