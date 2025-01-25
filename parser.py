@@ -34,7 +34,7 @@ def extract_search_target(doc):
                 "mark_searched", "target_class", "goods_&_services"
                 
                 Do not include any additional text or explanations.  
-                Determine target_class based on the international tradeark class of the goods and services.
+                Determine target_class only based on the international tradeark class of the "Goods and Services" present in the document chunk, do not consider "Classes Searched" as target class.
 
                 Document chunk to extract from: 
                 {chunk}
