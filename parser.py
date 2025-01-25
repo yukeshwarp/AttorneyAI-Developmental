@@ -1,6 +1,7 @@
 import requests
 import json
 import fitz
+import re
 from utils.config import *
 import logging as log
 import asyncio
@@ -251,6 +252,19 @@ async def extract_trademark_details(document_chunk: str, tm_name, target, semaph
     base_delay = 1  # Base delay in seconds
     jitter = 0.5  # Maximum jitter to add to the delay
 
+    # Extract goods/services using regular expression
+    goods_services_pattern = r"Goods/Services:\s*(.*?)\s*Last Reported Owner:"
+    goods_services_match = re.search(goods_services_pattern, document_chunk, re.DOTALL)
+
+    goods_services = (
+        goods_services_match.group(1).strip() if goods_services_match else "null"
+    )
+
+    # Remove goods/services from the document chunk
+    document_chunk_cleaned = re.sub(
+        goods_services_pattern, "", document_chunk, flags=re.DOTALL
+    )
+
     async with semaphore:  # Acquire semaphore before executing
         for attempt in range(1, max_retries + 1):
             try:
@@ -268,7 +282,6 @@ async def extract_trademark_details(document_chunk: str, tm_name, target, semaph
                         - Status  
                         - Serial Number  (Return null if not present)
                         - International Class Number (as a list of integers)
-                        - Goods & Services (Goods and services are given after every international class, extract them intelligently as they may span over more than one page.)
                         - Owner  
                         - Filed Date (format: MMM DD, YYYY, e.g., Jun 14, 2024, Return null if not present)  
                         - Registration Number  (Return null if not present)
@@ -286,10 +299,11 @@ async def extract_trademark_details(document_chunk: str, tm_name, target, semaph
         
                         Document chunk of to extract from: 
                         Trademark name: {tm_name} 
-                        {document_chunk}  
+                        {document_chunk_cleaned}  
                     """,
                     },
                 ]
+
                 tools = [
                     {
                         "type": "function",
@@ -306,7 +320,6 @@ async def extract_trademark_details(document_chunk: str, tm_name, target, semaph
                                         "type": "array",
                                         "items": {"type": "integer"},
                                     },
-                                    "goods_services": {"type": "string"},
                                     "owner": {"type": "string"},
                                     "filed_date": {"type": "string"},
                                     "registration_number": {"type": "string"},
@@ -316,7 +329,6 @@ async def extract_trademark_details(document_chunk: str, tm_name, target, semaph
                                     "trademark_name",
                                     "status",
                                     "international_class_number",
-                                    "goods_services",
                                     "owner",
                                 ],
                                 "additionalProperties": False,
@@ -339,9 +351,13 @@ async def extract_trademark_details(document_chunk: str, tm_name, target, semaph
                     )
                     if details["design_phrase"] == target:
                         details["design_phrase"] = "null"
+
+                    # Add the extracted goods/services to the structured output
+                    details["goods_services"] = goods_services
+
                     return details  # Successfully completed, return the result
                 else:
-                    logging.error("No function_call in response")
+                    log.error("No function_call in response")
                     return None
             except Exception as e:
                 if attempt == max_retries:
