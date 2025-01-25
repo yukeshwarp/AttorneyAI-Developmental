@@ -1,9 +1,8 @@
 import os
 from dotenv import load_dotenv
 from openai import AzureOpenAI
-from sentence_transformers import SentenceTransformer, util
 import phonetics
-from sentence_transformers import util
+from sentence_transformers import SentenceTransformer, util
 from rapidfuzz import fuzz
 
 
@@ -24,3 +23,4 @@ client = AzureOpenAI(
                 api_key=llm_api_key,
                 api_version="2024-10-01-preview",
             )
+llm_headers = {"Content-Type": "application/json", "api-key": llm_api_key}
