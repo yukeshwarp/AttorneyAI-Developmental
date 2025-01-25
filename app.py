@@ -151,11 +151,11 @@ if uploaded_files:
                 row[0].text = (
                     f"{result['Trademark name']} (Class {result['Trademark class Number']})"
                 )
-                row[1].text = result["Trademark -_status"]
+                row[1].text = result["Trademark status"]
                 row[2].text = (
                     f"{result['Trademark serial number']} / {result['Trademark registration number']}"
                 )
-                row[3].text = result["Trademark -_owner"]
+                row[3].text = result["Trademark owner"]
                 row[4].text = (
                     "Design" if result["Trademark design phrase"] else "Word"
                 )
