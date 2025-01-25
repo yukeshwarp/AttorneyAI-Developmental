@@ -2,13 +2,14 @@ import ast
 import requests
 from utils.config import *
 
+
 def compare_trademarks2(
     existing_trademark: List[Dict[str, Union[str, List[int]]]],
     proposed_name: str,
-    proposed_class: str,
+    proposed_class,
     proposed_goods_services: str,
 ) -> List[Dict[str, Union[str, int]]]:
-    proposed_classes = [int(c.strip()) for c in proposed_class.split(",")]
+    proposed_classes = proposed_class
 
     # Prepare the messages for the Azure OpenAI API
     messages = [
@@ -36,8 +37,8 @@ def compare_trademarks2(
             - Name: "{proposed_name}"  
            
             Existing Trademarks:
-            - Name: "{existing_trademark['-_trademark_name']}"  
-            - Status: "{existing_trademark['-_status']}"
+            - Name: "{existing_trademark['trademark_name']}"  
+            - Status: "{existing_trademark['status']}"
            
             Instructions:
             1. Review the proposed and existing trademark data.  
@@ -95,7 +96,7 @@ def compare_trademarks2(
 def assess_conflict(
     existing_trademark: List[Dict[str, Union[str, List[int]]]],
     proposed_name: str,
-    proposed_class: str,
+    proposed_class,
     proposed_goods_services: str,
 ) -> List[Dict[str, int]]:
 
@@ -110,7 +111,7 @@ def assess_conflict(
         return " ".join(text.split())
 
     # Clean and standardize the trademark status
-    status = existing_trademark["-_status"].strip().lower()
+    status = existing_trademark["status"].strip().lower()
     # Check for 'Cancelled' or 'Abandoned' status
     if any(keyword in status for keyword in ["cancelled", "abandoned", "expired"]):
         conflict_grade = "No-conflict"
@@ -118,7 +119,7 @@ def assess_conflict(
     else:
 
         existing_trademark_name = normalize_text_name(
-            existing_trademark["-_trademark_name"]
+            existing_trademark["trademark_name"]
         )
         proposed_name = normalize_text_name(proposed_name)
 
@@ -164,11 +165,6 @@ def assess_conflict(
             existing_trademark_name, proposed_name
         )
 
-        # st.write(f"Shared word : {existing_trademark_name} : {shared_word}")
-        # st.write(f"Phonetic partial match : {existing_trademark_name} : {phonetic_partial_match}")
-        # st.write(f"Substring match : {existing_trademark_name} : {substring_match}")
-
-        # Decision Logic
         if (
             phonetic_match
             or substring_match
@@ -194,13 +190,13 @@ def assess_conflict(
         )
 
     return {
-        "Trademark name": existing_trademark["-_trademark_name"],
-        "Trademark -_status": existing_trademark["-_status"],
-        "Trademark -_owner": existing_trademark["-_owner"],
-        "Trademark class Number": existing_trademark["-_international_class_number"],
-        "Trademark serial number": existing_trademark["-_serial_number"],
-        "Trademark registration number": existing_trademark["-_registration_number"],
-        "Trademark design phrase": existing_trademark["-_design_phrase"],
+        "Trademark name": existing_trademark["trademark_name"],
+        "Trademark status": existing_trademark["status"],
+        "Trademark owner": existing_trademark["owner"],
+        "Trademark class Number": existing_trademark["international_class_number"],
+        "Trademark serial number": existing_trademark["serial_number"],
+        "Trademark registration number": existing_trademark["registration_number"],
+        "Trademark design phrase": existing_trademark["design_phrase"],
         "conflict_grade": conflict_grade,
         "reasoning": reasoning,
     }
@@ -209,33 +205,13 @@ def assess_conflict(
 def compare_trademarks(
     existing_trademark: Dict[str, Union[str, List[int]]],
     proposed_name: str,
-    proposed_class: str,
+    proposed_class,
     proposed_goods_services: str,
 ) -> Dict[str, Union[str, int]]:
     # Convert proposed classes to a list of integers
-    international_class_numbers = ast.literal_eval(
-        existing_trademark["-_international_class_number"]
-    )
-    proposed_classes = [int(c.strip()) for c in proposed_class.split(",")]
+    international_class_numbers = existing_trademark["international_class_number"]
+    proposed_classes = proposed_class
     if not (any(cls in international_class_numbers for cls in proposed_classes)):
-        # conflict_grade, reasoning = compare_trademarks2(
-        #     existing_trademark, proposed_name, proposed_class, proposed_goods_services
-        # )
-        # return {
-        #     "Trademark name": existing_trademark["-_trademark_name"],
-        #     "Trademark -_status": existing_trademark["-_status"],
-        #     "Trademark -_owner": existing_trademark["-_owner"],
-        #     "Trademark class Number": existing_trademark[
-        #         "-_international_class_number"
-        #     ],
-        #     "Trademark serial number": existing_trademark["-_serial_number"],
-        #     "Trademark registration number": existing_trademark[
-        #         "-_registration_number"
-        #     ],
-        #     "Trademark design phrase": existing_trademark["-_design_phrase"],
-        #     "conflict_grade": conflict_grade,
-        #     "reasoning": reasoning,
-        # }
         return assess_conflict(
             existing_trademark, proposed_name, proposed_class, proposed_goods_services
         )
@@ -427,50 +403,22 @@ def compare_trademarks(
         answer = response.choices[0].message.content.strip().lower()
         return "yes" in answer.lower()
 
-    # Condition 1A: Exact character-for-character match
     condition_1A_satisfied = (
-        existing_trademark["-_trademark_name"].strip().lower()
+        existing_trademark["trademark_name"].strip().lower()
         == proposed_name.strip().lower()
     )
-
-    # condition_1A_satisfieds = is_exact_match(
-    #     existing_trademark["-_trademark_name"].strip().lower(),
-    #     proposed_name.strip().lower(),
-    # )
-    # st.write(f"Exact Match: {condition_1A_satisfieds}")
-
-    # Condition 1B: Semantically equivalent
     condition_1B_satisfied = is_semantically_equivalent(
-        existing_trademark["-_trademark_name"], proposed_name
+        existing_trademark["trademark_name"], proposed_name
     )
-
-    # condition_1B_satisfieds = is_semantically_equivalents(
-    #     existing_trademark["-_trademark_name"].strip().lower(),
-    #     proposed_name.strip().lower(),
-    # )
-    # st.write(f"Semantically equivalents : {condition_1B_satisfieds}")
-
-    # Condition 1C: Phonetically equivalent
     condition_1C_satisfied = is_phonetically_equivalent(
-        existing_trademark["-_trademark_name"], proposed_name
+        existing_trademark["trademark_name"], proposed_name
     )
-
-    # condition_1C_satisfieds = is_phonetically_equivalents(
-    #     existing_trademark["-_trademark_name"], proposed_name
-    # )
-    # st.write(f"Phonetically equivalents : {condition_1C_satisfieds}")
-
-    # Condition 1D: First two or more words are phonetically equivalent
     condition_1D_satisfied = first_words_phonetically_equivalent(
-        existing_trademark["-_trademark_name"], proposed_name
+        existing_trademark["trademark_name"], proposed_name
     )
-
-    # Condition 1E: Proposed name is the first word of the existing trademark
     condition_1E_satisfied = (
-        existing_trademark["-_trademark_name"].lower().startswith(proposed_name.lower())
+        existing_trademark["trademark_name"].lower().startswith(proposed_name.lower())
     )
-
-    # Check if any Condition 1 is satisfied
     condition_1_satisfied = any(
         [
             condition_1A_satisfied,
@@ -534,7 +482,7 @@ def compare_trademarks(
 
     # Condition 2: Overlap in International Class Numbers
     international_class_numbers = ast.literal_eval(
-        existing_trademark["-_international_class_number"]
+        existing_trademark["international_class_number"]
     )
 
     # Check if any class in proposed_classes is in the international_class_numbers
@@ -544,19 +492,6 @@ def compare_trademarks(
 
     import re
     from nltk.stem import WordNetLemmatizer
-
-    # def normalize_text(text):
-    #     # Replace special hyphen-like characters with a standard hyphen
-    #     text = re.sub(r"[−–—]", "-", text)
-    #     # Remove punctuation except hyphens, spaces, and semicolons
-    #     text = re.sub(r"[^\w\s;]", " ", text)
-    #     # Convert to lowercase
-    #     text = text.lower()
-    #     # Replace 'shampoos;' with 'hair'
-    #     text = re.sub(r"\bshampoos;\b", "hair", text)
-    #     # Standardize whitespace (removes extra spaces between words)
-    #     return " ".join(text.split())
-
     def normalize_text(text):
 
         # Replace special hyphen-like characters with a standard hyphen
@@ -620,16 +555,16 @@ def compare_trademarks(
         return bool(common_words)
 
     condition_3_satisfied = target_market_and_goods_overlap(
-        existing_trademark["-_goods_&_services"], proposed_goods_services
+        existing_trademark["goods_services"], proposed_goods_services
     )
 
-    # Clean and standardize the trademark -_status
-    status = existing_trademark["-_status"].strip().lower()
+    # Clean and standardize the trademark status
+    status = existing_trademark["status"].strip().lower()
 
-    # Check for 'Cancelled' or 'Abandoned' -_status
+    # Check for 'Cancelled' or 'Abandoned' status
     if any(keyword in status for keyword in ["cancelled", "abandoned", "expired"]):
         conflict_grade = "Low"
-        reasoning = "The existing trademark -_status is 'Cancelled' or 'Abandoned.'"
+        reasoning = "The existing trademark status is 'Cancelled' or 'Abandoned.'"
     else:
         points = sum(
             [
@@ -688,13 +623,13 @@ def compare_trademarks(
 
     # Return results
     return {
-        "Trademark name": existing_trademark["-_trademark_name"],
-        "Trademark -_status": existing_trademark["-_status"],
-        "Trademark -_owner": existing_trademark["-_owner"],
-        "Trademark class Number": existing_trademark["-_international_class_number"],
-        "Trademark serial number": existing_trademark["-_serial_number"],
-        "Trademark registration number": existing_trademark["-_registration_number"],
-        "Trademark design phrase": existing_trademark["-_design_phrase"],
+        "Trademark name": existing_trademark["trademark_name"],
+        "Trademark status": existing_trademark["status"],
+        "Trademark owner": existing_trademark["owner"],
+        "Trademark class Number": existing_trademark["international_class_number"],
+        "Trademark serial number": existing_trademark["serial_number"],
+        "Trademark registration number": existing_trademark["registration_number"],
+        "Trademark design phrase": existing_trademark["design_phrase"],
         "conflict_grade": conflict_grade,
         "reasoning": reasoning,
     }
