@@ -145,7 +145,8 @@ def extractor(doc):
     previous_count = -1
     count_prompt = f"""
         You are tasked with counting the total number of trademarks listed in the provided index text. 
-        Simply return the total count as an integer without any additional text or explanations.
+        Include all trademarks irrespective of their status whether abandoned or cancelled, extract every entry in the index.
+        Simply return the total count as an integer without any additional text, markers or explanations.
 
         Input Text:
         {index}
@@ -158,7 +159,9 @@ def extractor(doc):
         You are tasked with counting the total number of trademarks in the provided index text. 
         Ensure the count is accurate and consistent with the previously given count of {previous_count}. 
         If the current count differs, confirm and provide only the updated total as an integer.
-        
+        Include all trademarks irrespective of their status whether abandoned or cancelled, include every entry in the index in count.
+        Simply return the total count as an integer without any additional text, markers or explanations.
+
         Input Text:
         {index}
         """
